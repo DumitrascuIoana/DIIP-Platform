@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Scanare Rețea{% endblock %}
+{% block page_title %}Scanare Rețea{% endblock %}
+{% block page_subtitle %}Descoperă device-urile active din infrastructură{% endblock %}
+
+{% block content %}
+
+<div class="row g-4">
+
+    <!-- Formular scanare -->
+    <div class="col-xl-5">
+        <div class="table-card">
+            <div class="table-card-header">
+                <h5><i class="bi bi-radar me-2"></i>Configurare Scanare</h5>
+            </div>
+            <div class="p-4">
+
+                <div class="mb-4">
+                    <label class="form-label">IP Range</label>
+                    <input type="text" class="form-control diip-input" id="ip-range"
+                           placeholder="Ex: 192.168.1.1-254"
+                           value="192.168.1.1-254">
+                    <small class="text-muted mt-1 d-block">
+                        Găsește IP-ul rețelei tale cu <code>ipconfig</code> în terminal
+                    </small>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Tip Scanare</label>
+                    <div class="scan-type-selector">
+                        <div class="scan-type-option selected" id="opt-fast" onclick="selectScanType(false)">
+                            <i class="bi bi-lightning-fill text-warning"></i>
+                            <div>
+                                <strong>Rapidă</strong>
+                                <small>Ping scan — 10-30 secunde</small>
+                            </div>
+                        </div>
+                        <div class="scan-type-option" id="opt-detailed" onclick="selectScanType(true)">
+                            <i class="bi bi-search text-info"></i>
+                            <div>
+                                <strong>Detaliată</strong>
+                                <small>OS + porturi — 2-5 minute</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary w-100 btn-scan" id="btn-scan" onclick="startScan()">
+                    <i class="bi bi-play-fill me-2"></i>
+                    Pornește Scanarea
+                </button>
+
+                <!-- Status scanare -->
+                <div id="scan-status" class="scan-status-box mt-3" style="display:none">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                        <span id="scan-status-text">Scanare în curs...</span>
+                    </div>
+                    <div class="progress mt-2">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                             style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <!-- Rezultat scanare -->
+                <div id="scan-result" class="mt-3" style="display:none"></div>
+
+            </div>
+        </div>
+
+        <!-- Info box -->
+        <div class="info-box mt-4">
+            <h6><i class="bi bi-info-circle me-2"></i>Cum funcționează</h6>
+            <ul class="info-list">
+                <li>Scanarea rapidă trimite ping la fiecare IP din range</li>
+                <li>Device-urile care răspund sunt salvate automat în inventar</li>
+                <li>Scanarea detaliată detectează OS și porturile deschise</li>
+                <li>Device-urile existente sunt actualizate, nu duplicate</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Istoric scanări -->
+    <div class="col-xl-7">
+        <div class="table-card">
+            <div class="table-card-header">
+                <h5><i class="bi bi-clock-history me-2"></i>Istoric Scanări</h5>
+                <button class="btn-link" onclick="loadHistory()">
+                    <i class="bi bi-arrow-clockwise"></i> Reîncarcă
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table diip-table">
+                    <thead>
+                        <tr>
+                            <th>IP Range</th>
+                            <th>Început</th>
+                            <th>Durată</th>
+                            <th>Device-uri</th>
+                            <th>Status</th>
+                            <th>Tip</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-tbody">
+                        <tr>
+                            <td colspan="6" class="text-center py-3">
+                                <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                                Se încarcă...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let isDetailed = false;
+
+function selectScanType(detailed) {
+    isDetailed = detailed;
+    document.getElementById('opt-fast').classList.toggle('selected', !detailed);
+    document.getElementById('opt-detailed').classList.toggle('selected', detailed);
+}
+
+async function startScan() {
+    const ipRange = document.getElementById('ip-range').value.trim();
+    if (!ipRange) { alert('Introdu un IP range!'); return; }
+
+    const btn       = document.getElementById('btn-scan');
+    const statusBox = document.getElementById('scan-status');
+    const resultBox = document.getElementById('scan-result');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Scanare în curs...';
+    statusBox.style.display = 'block';
+    resultBox.style.display = 'none';
+
+    document.getElementById('scan-status-text').textContent =
+        isDetailed ? 'Scanare detaliată în curs (2-5 minute)...' : 'Scanare rapidă în curs...';
+
+    try {
+        const resp = await fetch('/api/scan', {
+            method:  'POST',
+            headers: {'Content-Type': 'application/json'},
+            body:    JSON.stringify({ ip_range: ipRange, detailed: isDetailed })
+        });
+        const data = await resp.json();
+
+        statusBox.style.display = 'none';
+        btn.disabled  = false;
+        btn.innerHTML = '<i class="bi bi-play-fill me-2"></i>Pornește Scanarea';
+
+        resultBox.style.display = 'block';
+        resultBox.innerHTML = `
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <strong>Scanare pornită!</strong> ${data.message}
+                <br><small class="text-muted">Verifică inventarul după finalizare.</small>
+            </div>
+        `;
+
+        // Reîncarcă istoricul după 3 secunde
+        setTimeout(loadHistory, 3000);
+
+    } catch (e) {
+        statusBox.style.display = 'none';
+        btn.disabled  = false;
+        btn.innerHTML = '<i class="bi bi-play-fill me-2"></i>Pornește Scanarea';
+        resultBox.style.display = 'block';
+        resultBox.innerHTML = `<div class="alert alert-danger"><i class="bi bi-x-circle me-2"></i>Eroare: ${e.message}</div>`;
+    }
+}
+
+async function loadHistory() {
+    try {
+        const resp    = await fetch('/api/scan/history');
+        const data    = await resp.json();
+        const history = data.history || [];
+        const tbody   = document.getElementById('history-tbody');
+
+        if (history.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Nicio scanare efectuată încă.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = history.map(h => {
+            // Calculăm durata
+            let duration = '—';
+            if (h.started_at && h.finished_at) {
+                const start = new Date(h.started_at);
+                const end   = new Date(h.finished_at);
+                const sec   = Math.round((end - start) / 1000);
+                duration    = sec < 60 ? `${sec}s` : `${Math.round(sec/60)}m`;
+            }
+
+            const statusBadge = {
+                'completed': '<span class="badge bg-success">Completat</span>',
+                'running':   '<span class="badge bg-primary">În curs</span>',
+                'failed':    '<span class="badge bg-danger">Eșuat</span>'
+            }[h.status] || h.status;
+
+            return `
+                <tr>
+                    <td><code>${h.ip_range}</code></td>
+                    <td><small>${h.started_at || '—'}</small></td>
+                    <td>${duration}</td>
+                    <td><strong>${h.devices_found}</strong></td>
+                    <td>${statusBadge}</td>
+                    <td><small class="text-muted">${h.triggered_by || '—'}</small></td>
+                </tr>
+            `;
+        }).join('');
+
+    } catch (e) {
+        console.error('Eroare istoric:', e);
+    }
+}
+
+loadHistory();
+</script>
+{% endblock %}

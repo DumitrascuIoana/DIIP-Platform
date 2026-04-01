@@ -1,0 +1,829 @@
+/* ============================================================
+   style.css — Digital Infrastructure Intelligence Platform
+   Tema: Dark mode profesional, inspirat din tool-uri DevOps
+   ============================================================ */
+
+/* ── Variabile globale (culori, fonturi) ─────────────────────── */
+:root {
+    --bg-dark:       #0f172a;   /* fundal pagina */
+    --bg-card:       #1e293b;   /* fundal carduri */
+    --bg-sidebar:    #0f172a;   /* fundal sidebar */
+    --bg-hover:      #334155;   /* hover pe elemente */
+    --border:        #334155;   /* borduri */
+
+    --text-primary:  #f1f5f9;   /* text principal */
+    --text-muted:    #64748b;   /* text secundar */
+    --text-link:     #3b82f6;   /* linkuri */
+
+    --accent-blue:   #3b82f6;
+    --accent-green:  #22c55e;
+    --accent-red:    #ef4444;
+    --accent-yellow: #f59e0b;
+    --accent-cyan:   #06b6d4;
+
+    --sidebar-width: 240px;
+    --header-height: 70px;
+
+    --font-main:  'Inter', sans-serif;
+    --font-mono:  'JetBrains Mono', monospace;
+    --radius:     10px;
+    --radius-sm:  6px;
+}
+
+/* ── Reset și bază ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family:      var(--font-main);
+    background-color: var(--bg-dark);
+    color:            var(--text-primary);
+    display:          flex;
+    min-height:       100vh;
+    font-size:        14px;
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+    width:      var(--sidebar-width);
+    min-height: 100vh;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display:    flex;
+    flex-direction: column;
+    position:   fixed;
+    top:        0;
+    left:       0;
+    z-index:    100;
+    padding:    1.5rem 0;
+}
+
+.sidebar-brand {
+    display:     flex;
+    align-items: center;
+    gap:         0.75rem;
+    padding:     0 1.25rem 1rem;
+}
+
+.brand-icon {
+    width:           40px;
+    height:          40px;
+    background:      linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+    border-radius:   var(--radius-sm);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       1.2rem;
+    color:           white;
+    flex-shrink:     0;
+}
+
+.brand-name {
+    display:     block;
+    font-weight: 700;
+    font-size:   1rem;
+    color:       var(--text-primary);
+    letter-spacing: 0.05em;
+}
+
+.brand-sub {
+    display:   block;
+    font-size: 0.7rem;
+    color:     var(--text-muted);
+}
+
+.sidebar-divider {
+    border-color: var(--border);
+    margin:       0.5rem 1.25rem;
+    opacity:      0.5;
+}
+
+/* ── Nav items ───────────────────────────────────────────────── */
+.sidebar-nav {
+    display:        flex;
+    flex-direction: column;
+    gap:            0.25rem;
+    padding:        0 0.75rem;
+    flex:           1;
+}
+
+.nav-item {
+    display:         flex;
+    align-items:     center;
+    gap:             0.75rem;
+    padding:         0.65rem 0.75rem;
+    border-radius:   var(--radius-sm);
+    color:           var(--text-muted);
+    text-decoration: none;
+    font-size:       0.875rem;
+    font-weight:     500;
+    transition:      all 0.15s ease;
+    position:        relative;
+}
+
+.nav-item:hover {
+    background: var(--bg-hover);
+    color:      var(--text-primary);
+}
+
+.nav-item.active {
+    background: rgba(59, 130, 246, 0.15);
+    color:      var(--accent-blue);
+    border-left: 3px solid var(--accent-blue);
+}
+
+.nav-item i { font-size: 1rem; width: 1.2rem; text-align: center; }
+
+.badge-alert {
+    margin-left:     auto;
+    background:      var(--accent-red);
+    color:           white;
+    font-size:       0.65rem;
+    font-weight:     700;
+    min-width:       18px;
+    height:          18px;
+    border-radius:   9px;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    padding:         0 4px;
+}
+
+/* ── Sidebar footer ──────────────────────────────────────────── */
+.sidebar-footer {
+    padding:   0 1.25rem;
+    margin-top: auto;
+}
+
+.db-status {
+    display:     flex;
+    align-items: center;
+    gap:         0.5rem;
+    font-size:   0.75rem;
+    color:       var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.app-version {
+    font-size:   0.7rem;
+    color:       var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+.main-content {
+    margin-left: var(--sidebar-width);
+    flex:        1;
+    display:     flex;
+    flex-direction: column;
+    min-height:  100vh;
+}
+
+/* ── Top header ──────────────────────────────────────────────── */
+.top-header {
+    height:          var(--header-height);
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+    padding:         0 2rem;
+    border-bottom:   1px solid var(--border);
+    background:      var(--bg-dark);
+    position:        sticky;
+    top:             0;
+    z-index:         50;
+}
+
+.page-title h1 {
+    font-size:   1.25rem;
+    font-weight: 600;
+    margin:      0;
+}
+
+.page-subtitle {
+    font-size: 0.75rem;
+    color:     var(--text-muted);
+    margin:    0;
+}
+
+.header-actions {
+    display:     flex;
+    align-items: center;
+    gap:         1.5rem;
+}
+
+.alert-bell {
+    position: relative;
+    cursor:   pointer;
+    font-size: 1.1rem;
+    color:     var(--text-muted);
+    transition: color 0.15s;
+}
+.alert-bell:hover { color: var(--text-primary); }
+
+.bell-badge {
+    position:        absolute;
+    top:             -6px;
+    right:           -6px;
+    background:      var(--accent-red);
+    color:           white;
+    font-size:       0.6rem;
+    font-weight:     700;
+    min-width:       16px;
+    height:          16px;
+    border-radius:   8px;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    padding:         0 3px;
+}
+
+.last-updated {
+    font-size:   0.75rem;
+    color:       var(--text-muted);
+    display:     flex;
+    align-items: center;
+    gap:         0.4rem;
+    font-family: var(--font-mono);
+}
+
+/* ── Page content ────────────────────────────────────────────── */
+.page-content {
+    padding: 2rem;
+    flex:    1;
+}
+
+/* ============================================================
+   CARDURI STATISTICI
+   ============================================================ */
+.stat-card {
+    background:    var(--bg-card);
+    border:        1px solid var(--border);
+    border-radius: var(--radius);
+    padding:       1.5rem;
+    display:       flex;
+    align-items:   center;
+    gap:           1.25rem;
+    transition:    transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    transform:  translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.stat-icon {
+    width:           52px;
+    height:          52px;
+    border-radius:   var(--radius-sm);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       1.4rem;
+    flex-shrink:     0;
+}
+
+.icon-blue   { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue);   }
+.icon-green  { background: rgba(34, 197, 94,  0.15); color: var(--accent-green);  }
+.icon-red    { background: rgba(239, 68, 68,  0.15); color: var(--accent-red);    }
+.icon-yellow { background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow); }
+
+.stat-value {
+    font-size:   2rem;
+    font-weight: 700;
+    line-height: 1;
+    font-family: var(--font-mono);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color:     var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* ============================================================
+   CARDURI GRAFICE
+   ============================================================ */
+.chart-card {
+    background:    var(--bg-card);
+    border:        1px solid var(--border);
+    border-radius: var(--radius);
+    overflow:      hidden;
+    height:        100%;
+}
+
+.chart-header {
+    padding:       1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.chart-header h5 {
+    margin:      0;
+    font-size:   0.9rem;
+    font-weight: 600;
+    color:       var(--text-primary);
+}
+
+.chart-body {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-height: 280px;
+}
+
+/* ============================================================
+   CARDURI TABEL
+   ============================================================ */
+.table-card {
+    background:    var(--bg-card);
+    border:        1px solid var(--border);
+    border-radius: var(--radius);
+    overflow:      hidden;
+}
+
+.table-card-header {
+    padding:         1rem 1.5rem;
+    border-bottom:   1px solid var(--border);
+    display:         flex;
+    align-items:     center;
+    justify-content: space-between;
+}
+
+.table-card-header h5 {
+    margin:      0;
+    font-size:   0.9rem;
+    font-weight: 600;
+}
+
+.btn-link {
+    background:  none;
+    border:      none;
+    color:       var(--text-link);
+    font-size:   0.8rem;
+    cursor:      pointer;
+    padding:     0;
+    text-decoration: none;
+}
+.btn-link:hover { text-decoration: underline; }
+
+/* ── Tabel principal ─────────────────────────────────────────── */
+.diip-table {
+    margin:     0;
+    color:      var(--text-primary);
+}
+
+.diip-table thead th {
+    background:    var(--bg-dark);
+    color:         var(--text-muted);
+    font-size:     0.75rem;
+    font-weight:   600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+    padding:       0.75rem 1rem;
+    white-space:   nowrap;
+}
+
+.diip-table tbody td {
+    border-bottom: 1px solid var(--border);
+    padding:       0.75rem 1rem;
+    vertical-align: middle;
+}
+
+.diip-table tbody tr:hover {
+    background: rgba(51, 65, 85, 0.4);
+}
+
+.diip-table tbody tr:last-child td { border-bottom: none; }
+
+/* ============================================================
+   STATUS DOTS & BADGES
+   ============================================================ */
+.status-dot {
+    display:       inline-block;
+    width:         8px;
+    height:        8px;
+    border-radius: 50%;
+    flex-shrink:   0;
+}
+
+.dot-online  { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+.dot-offline { background: var(--accent-red);   box-shadow: 0 0 6px var(--accent-red);   }
+.dot-unknown { background: var(--text-muted); }
+
+.status-badge {
+    display:       inline-flex;
+    align-items:   center;
+    gap:           0.4rem;
+    padding:       0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size:     0.75rem;
+    font-weight:   500;
+}
+
+.status-online  { background: rgba(34, 197, 94,  0.15); color: var(--accent-green); }
+.status-offline { background: rgba(239, 68, 68,  0.15); color: var(--accent-red);   }
+.status-unknown { background: rgba(100, 116, 139, 0.15); color: var(--text-muted);  }
+
+/* ── Badge-uri tip device ────────────────────────────────────── */
+.badge-type {
+    display:       inline-flex;
+    align-items:   center;
+    gap:           0.3rem;
+    padding:       0.2rem 0.6rem;
+    border-radius: var(--radius-sm);
+    font-size:     0.75rem;
+    font-weight:   500;
+    background:    rgba(59, 130, 246, 0.1);
+    color:         var(--accent-blue);
+}
+
+.badge-server  { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+.badge-laptop  { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+.badge-router  { background: rgba(6, 182, 212, 0.15);  color: var(--accent-cyan); }
+.badge-printer { background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow); }
+.badge-unknown { background: rgba(100, 116, 139, 0.1); color: var(--text-muted); }
+
+/* ── OS Badge ────────────────────────────────────────────────── */
+.os-badge {
+    display:     inline-flex;
+    align-items: center;
+    gap:         0.3rem;
+    font-size:   0.75rem;
+    color:       var(--text-muted);
+}
+
+.os-windows { color: #60a5fa; }
+.os-linux   { color: #facc15; }
+.os-cisco   { color: var(--accent-cyan); }
+
+/* ── Departament badge ───────────────────────────────────────── */
+.dept-badge {
+    background:    rgba(59, 130, 246, 0.08);
+    color:         var(--text-muted);
+    padding:       0.15rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size:     0.75rem;
+    border:        1px solid var(--border);
+}
+
+/* ── IP code ─────────────────────────────────────────────────── */
+.ip-code {
+    font-family: var(--font-mono);
+    font-size:   0.8rem;
+    color:       var(--accent-cyan);
+    background:  rgba(6, 182, 212, 0.08);
+    padding:     0.1rem 0.4rem;
+    border-radius: var(--radius-sm);
+}
+
+code {
+    font-family: var(--font-mono);
+    font-size:   0.8rem;
+    color:       var(--accent-cyan);
+}
+
+/* ── Buton acțiune ───────────────────────────────────────────── */
+.btn-action {
+    background:    none;
+    border:        1px solid var(--border);
+    color:         var(--text-muted);
+    padding:       0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    cursor:        pointer;
+    font-size:     0.85rem;
+    transition:    all 0.15s;
+}
+.btn-action:hover {
+    background: var(--bg-hover);
+    color:      var(--text-primary);
+    border-color: var(--accent-blue);
+}
+
+/* ============================================================
+   FILTER BAR
+   ============================================================ */
+.filter-bar {
+    display:     flex;
+    align-items: center;
+    gap:         1rem;
+    flex-wrap:   wrap;
+}
+
+.search-box {
+    display:         flex;
+    align-items:     center;
+    gap:             0.5rem;
+    background:      var(--bg-card);
+    border:          1px solid var(--border);
+    border-radius:   var(--radius-sm);
+    padding:         0.4rem 0.75rem;
+    color:           var(--text-muted);
+}
+
+.search-box input {
+    background:  none;
+    border:      none;
+    outline:     none;
+    color:       var(--text-primary);
+    font-size:   0.875rem;
+    width:       220px;
+}
+
+.search-box input::placeholder { color: var(--text-muted); }
+
+.filter-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+.filter-btn {
+    background:    none;
+    border:        1px solid var(--border);
+    color:         var(--text-muted);
+    padding:       0.35rem 0.75rem;
+    border-radius: var(--radius-sm);
+    cursor:        pointer;
+    font-size:     0.8rem;
+    transition:    all 0.15s;
+    display:       flex;
+    align-items:   center;
+    gap:           0.3rem;
+}
+.filter-btn:hover  { border-color: var(--accent-blue); color: var(--text-primary); }
+.filter-btn.active { background: rgba(59, 130, 246, 0.15); border-color: var(--accent-blue); color: var(--accent-blue); }
+
+.devices-count {
+    font-size:   0.8rem;
+    color:       var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+/* ============================================================
+   ALERTE
+   ============================================================ */
+.alert-item {
+    display:       flex;
+    align-items:   flex-start;
+    gap:           0.75rem;
+    padding:       0.75rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    transition:    background 0.15s;
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-item.unread { background: rgba(59, 130, 246, 0.03); }
+.alert-item:hover  { background: rgba(51, 65, 85, 0.3); }
+
+.alert-icon { font-size: 1rem; margin-top: 0.1rem; flex-shrink: 0; }
+
+.alert-message {
+    font-size:   0.875rem;
+    font-weight: 500;
+    color:       var(--text-primary);
+}
+.alert-meta {
+    font-size: 0.75rem;
+    color:     var(--text-muted);
+    margin-top: 0.2rem;
+}
+
+/* ── Alert rows (pagina Alerte) ──────────────────────────────── */
+.alert-row {
+    display:       flex;
+    align-items:   center;
+    gap:           1rem;
+    padding:       1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    transition:    background 0.15s;
+}
+.alert-row:last-child { border-bottom: none; }
+.alert-row.unread { border-left: 3px solid var(--accent-blue); }
+.alert-row.severity-critical.unread { border-left-color: var(--accent-red); }
+.alert-row.severity-warning.unread  { border-left-color: var(--accent-yellow); }
+.alert-row:hover { background: rgba(51, 65, 85, 0.3); }
+
+.alert-row-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+.alert-row-body { flex: 1; }
+.alert-row-message { font-size: 0.875rem; font-weight: 500; }
+.alert-row-meta {
+    font-size:  0.75rem;
+    color:      var(--text-muted);
+    margin-top: 0.2rem;
+    display:    flex;
+    align-items: center;
+    flex-wrap:  wrap;
+    gap:        0.2rem;
+}
+
+.alert-type-badge {
+    background:    var(--bg-hover);
+    padding:       0.1rem 0.4rem;
+    border-radius: 20px;
+    font-size:     0.7rem;
+}
+
+.alert-row-actions { flex-shrink: 0; }
+
+/* ============================================================
+   SCAN PAGE
+   ============================================================ */
+.scan-type-selector {
+    display: flex;
+    gap:     0.75rem;
+}
+
+.scan-type-option {
+    flex:          1;
+    background:    var(--bg-dark);
+    border:        2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding:       0.75rem 1rem;
+    cursor:        pointer;
+    display:       flex;
+    align-items:   center;
+    gap:           0.75rem;
+    transition:    all 0.15s;
+}
+.scan-type-option:hover    { border-color: var(--accent-blue); }
+.scan-type-option.selected { border-color: var(--accent-blue); background: rgba(59, 130, 246, 0.08); }
+.scan-type-option strong   { display: block; font-size: 0.875rem; }
+.scan-type-option small    { color: var(--text-muted); font-size: 0.75rem; }
+.scan-type-option i        { font-size: 1.5rem; flex-shrink: 0; }
+
+.scan-status-box {
+    background:    rgba(59, 130, 246, 0.08);
+    border:        1px solid rgba(59, 130, 246, 0.2);
+    border-radius: var(--radius-sm);
+    padding:       0.75rem 1rem;
+}
+
+.info-box {
+    background:    var(--bg-card);
+    border:        1px solid var(--border);
+    border-radius: var(--radius);
+    padding:       1.25rem 1.5rem;
+}
+.info-box h6 { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+
+.info-list {
+    list-style:   none;
+    padding:      0;
+    margin:       0;
+}
+.info-list li {
+    font-size:    0.8rem;
+    color:        var(--text-muted);
+    padding:      0.3rem 0;
+    padding-left: 1rem;
+    position:     relative;
+}
+.info-list li::before {
+    content:  '→';
+    position: absolute;
+    left:     0;
+    color:    var(--accent-blue);
+}
+
+/* ============================================================
+   FORMULARE
+   ============================================================ */
+.diip-input {
+    background:    var(--bg-dark) !important;
+    border:        1px solid var(--border) !important;
+    color:         var(--text-primary) !important;
+    border-radius: var(--radius-sm) !important;
+    font-size:     0.875rem !important;
+}
+.diip-input:focus {
+    border-color: var(--accent-blue) !important;
+    box-shadow:   0 0 0 2px rgba(59, 130, 246, 0.15) !important;
+}
+.diip-input::placeholder { color: var(--text-muted) !important; }
+.diip-input option { background: var(--bg-card); }
+
+.form-label {
+    font-size:     0.8rem;
+    font-weight:   500;
+    color:         var(--text-muted);
+    margin-bottom: 0.4rem;
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.diip-modal {
+    background:    var(--bg-card);
+    border:        1px solid var(--border);
+    border-radius: var(--radius);
+    color:         var(--text-primary);
+}
+.diip-modal .modal-header { border-bottom-color: var(--border); }
+.diip-modal .modal-footer { border-top-color: var(--border); }
+.diip-modal .modal-title  { font-size: 1rem; }
+
+/* ============================================================
+   ELEMENTE GOALE & LOADING
+   ============================================================ */
+.empty-state {
+    text-align: center;
+    padding:    2rem;
+    color:      var(--text-muted);
+    font-size:  0.875rem;
+}
+.empty-state i { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+
+.loading-spinner {
+    display:     flex;
+    align-items: center;
+    gap:         0.5rem;
+    padding:     1rem 1.5rem;
+    color:       var(--text-muted);
+    font-size:   0.875rem;
+}
+
+/* ============================================================
+   DASHBOARD — liste
+   ============================================================ */
+.device-item {
+    display:         flex;
+    align-items:     center;
+    gap:             1rem;
+    padding:         0.65rem 1.5rem;
+    border-bottom:   1px solid var(--border);
+}
+.device-item:last-child { border-bottom: none; }
+.device-ip {
+    display:     flex;
+    align-items: center;
+    gap:         0.5rem;
+    min-width:   140px;
+}
+.device-name { flex: 1; font-size: 0.85rem; color: var(--text-muted); }
+
+/* ============================================================
+   PROGRESS BAR
+   ============================================================ */
+.progress {
+    background:    var(--bg-dark);
+    height:        4px;
+    border-radius: 2px;
+}
+.progress-bar { background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan)); }
+
+/* ============================================================
+   BUTOANE BOOTSTRAP — override pentru tema dark
+   ============================================================ */
+.btn-primary {
+    background:   var(--accent-blue);
+    border-color: var(--accent-blue);
+    font-weight:  500;
+}
+.btn-primary:hover { background: #2563eb; border-color: #2563eb; }
+
+.btn-scan {
+    height:      48px;
+    font-size:   0.95rem;
+    font-weight: 600;
+}
+
+.btn-outline-secondary {
+    border-color: var(--border);
+    color:        var(--text-muted);
+    font-size:    0.8rem;
+}
+.btn-outline-secondary:hover {
+    background:  var(--bg-hover);
+    border-color: var(--border);
+    color:        var(--text-primary);
+}
+
+/* ── Bootstrap alerts override ───────────────────────────────── */
+.alert-success {
+    background:  rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.2);
+    color:        var(--accent-green);
+}
+.alert-danger {
+    background:   rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.2);
+    color:        var(--accent-red);
+}
+
+/* ============================================================
+   SCROLLBAR (Webkit)
+   ============================================================ */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ============================================================
+   RESPONSIVE — sidebar ascuns pe mobil
+   ============================================================ */
+@media (max-width: 768px) {
+    .sidebar       { transform: translateX(-100%); }
+    .main-content  { margin-left: 0; }
+    .page-content  { padding: 1rem; }
+    .search-box input { width: 150px; }
+}

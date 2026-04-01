@@ -1,0 +1,52 @@
+# ============================================================
+# requirements.txt
+# Ce face: Lista tuturor librăriilor Python necesare aplicației
+#
+# Cum instalezi TOATE dintr-o dată:
+#   pip install -r requirements.txt
+#
+# Rulezi această comandă O SINGURĂ DATĂ în terminal,
+# în folderul proiectului.
+# ============================================================
+
+# ── Web Framework ─────────────────────────────────────────────
+fastapi==0.111.0
+# FastAPI = framework-ul care construiește API-ul și paginile web
+# Primește requesturi HTTP și returnează JSON sau HTML
+
+uvicorn==0.29.0
+# Uvicorn = serverul care rulează aplicația FastAPI
+# Pornești aplicația cu: uvicorn main:app --reload
+# --reload înseamnă: repornește automat când modifici cod
+
+jinja2==3.1.4
+# Motor de template-uri — pune date Python în fișierele HTML
+# Ex în HTML: <h1>{{ device.hostname }}</h1>
+
+python-multipart==0.0.9
+# Necesar pentru formularele HTML (ex: formularul de scanare)
+
+# ── Conectare la SQL Server ───────────────────────────────────
+pyodbc==5.1.0
+# pyodbc = librăria care face conexiunea Python <-> SQL Server
+# Folosește driverul ODBC instalat pe calculatorul tău
+# Fără aceasta, Python nu poate vorbi cu SSMS
+
+# ── Network Scanning ──────────────────────────────────────────
+python-nmap==0.7.1
+# Wrapper Python peste Nmap (tool de scanare rețea)
+# IMPORTANT: Trebuie sa ai Nmap instalat separat pe PC!
+# Descarca de la: https://nmap.org/download.html
+
+# ── Utilitare ─────────────────────────────────────────────────
+pydantic==2.7.1
+# Validare automată a datelor
+# Ex: dacă trimiți un IP invalid, Pydantic returnează eroare clară
+
+python-dotenv==1.0.1
+# Citește variabile din fișierul .env
+# Folosit pentru a nu pune parola DB direct în cod (buna practica!)
+
+apscheduler==3.10.4
+# Scheduler = rulează taskuri automat la intervale fixe
+# Ex: verifică device-urile la fiecare 5 minute (monitorizare)

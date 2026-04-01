@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Alerte{% endblock %}
+{% block page_title %}Alerte{% endblock %}
+{% block page_subtitle %}Monitorizare evenimente și notificări infrastructură{% endblock %}
+
+{% block content %}
+
+<!-- Filtre alerte -->
+<div class="filter-bar mb-4">
+    <div class="filter-buttons">
+        <button class="filter-btn active" onclick="setFilter('all', this)">Toate</button>
+        <button class="filter-btn" onclick="setFilter('unread', this)">Necitite</button>
+        <button class="filter-btn" onclick="setFilter('critical', this)">
+            <span class="text-danger">● </span>Critice
+        </button>
+        <button class="filter-btn" onclick="setFilter('warning', this)">
+            <span class="text-warning">● </span>Avertismente
+        </button>
+        <button class="filter-btn" onclick="setFilter('info', this)">
+            <span class="text-info">● </span>Informații
+        </button>
+    </div>
+    <div class="ms-auto d-flex gap-2">
+        <button class="btn btn-sm btn-outline-secondary" onclick="markAllRead()">
+            <i class="bi bi-check-all me-1"></i> Marchează toate citite
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="loadAlerts()">
+            <i class="bi bi-arrow-clockwise me-1"></i> Reîncarcă
+        </button>
+    </div>
+</div>
+
+<!-- Lista alerte -->
+<div class="table-card">
+    <div id="alerts-container">
+        <div class="text-center py-4">
+            <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+            Se încarcă alertele...
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allAlerts   = [];
+let activeFilter = 'all';
+
+async function loadAlerts() {
+    try {
+        const resp = await fetch('/api/alerts');
+        const data = await resp.json();
+        allAlerts  = data.alerts || [];
+        renderAlerts(allAlerts);
+    } catch (e) {
+        document.getElementById('alerts-container').innerHTML =
+            '<div class="text-center text-danger py-4">Eroare la încărcarea alertelor.</div>';
+    }
+}
+
+function setFilter(filter, btn) {
+    activeFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    let filtered = allAlerts;
+    if (filter === 'unread')   filtered = allAlerts.filter(a => !a.is_read);
+    if (filter === 'critical') filtered = allAlerts.filter(a => a.severity === 'critical');
+    if (filter === 'warning')  filtered = allAlerts.filter(a => a.severity === 'warning');
+    if (filter === 'info')     filtered = allAlerts.filter(a => a.severity === 'info');
+
+    renderAlerts(filtered);
+}
+
+function renderAlerts(alerts) {
+    const container = document.getElementById('alerts-container');
+
+    if (alerts.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state py-5">
+                <i class="bi bi-check-circle-fill text-success" style="font-size:3rem"></i>
+                <p class="mt-3 text-muted">Nicio alertă în această categorie.</p>
+            </div>`;
+        return;
+    }
+
+    const icons = {
+        'critical': '<i class="bi bi-x-circle-fill text-danger"></i>',
+        'warning':  '<i class="bi bi-exclamation-triangle-fill text-warning"></i>',
+        'info':     '<i class="bi bi-info-circle-fill text-info"></i>'
+    };
+
+    const typeLabels = {
+        'offline':     'Offline',
+        'back_online': 'Revenit Online',
+        'new_device':  'Device Nou'
+    };
+
+    container.innerHTML = alerts.map(a => `
+        <div class="alert-row ${a.is_read ? 'read' : 'unread'} severity-${a.severity}"
+             id="alert-${a.id}">
+
+            <div class="alert-row-icon">
+                ${icons[a.severity] || icons['info']}
+            </div>
+
+            <div class="alert-row-body">
+                <div class="alert-row-message">${a.message}</div>
+                <div class="alert-row-meta">
+                    <code>${a.ip_address}</code>
+                    ${a.hostname ? `<span>— ${a.hostname}</span>` : ''}
+                    <span class="mx-2">•</span>
+                    <span>${a.created_at}</span>
+                    <span class="mx-2">•</span>
+                    <span class="alert-type-badge">${typeLabels[a.alert_type] || a.alert_type}</span>
+                </div>
+            </div>
+
+            <div class="alert-row-actions">
+                ${!a.is_read ? `
+                    <button class="btn-action" onclick="markRead(${a.id})" title="Marchează citit">
+                        <i class="bi bi-check"></i>
+                    </button>
+                ` : '<span class="text-muted small">Citit</span>'}
+            </div>
+        </div>
+    `).join('');
+}
+
+async function markRead(alertId) {
+    try {
+        await fetch(`/api/alerts/${alertId}/read`, { method: 'PUT' });
+        // Actualizăm local fără să reîncărcăm toată pagina
+        const row = document.getElementById(`alert-${alertId}`);
+        if (row) {
+            row.classList.remove('unread');
+            row.classList.add('read');
+            row.querySelector('.alert-row-actions').innerHTML =
+                '<span class="text-muted small">Citit</span>';
+        }
+        // Actualizăm și badge-ul din header
+        loadUnreadAlerts();
+    } catch (e) {
+        console.error('Eroare la marcare:', e);
+    }
+}
+
+async function markAllRead() {
+    const unread = allAlerts.filter(a => !a.is_read);
+    for (const alert of unread) {
+        await markRead(alert.id);
+    }
+    await loadAlerts();
+}
+
+loadAlerts();
+// Reîncarcă la fiecare 30 secunde
+setInterval(loadAlerts, 30000);
+</script>
+{% endblock %}

@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Inventar{% endblock %}
+{% block page_title %}Inventar IT{% endblock %}
+{% block page_subtitle %}Toate device-urile descoperite în rețea{% endblock %}
+
+{% block content %}
+
+<!-- Filtre și căutare -->
+<div class="filter-bar mb-4">
+    <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" id="search-input" placeholder="Caută după IP, hostname, owner..." oninput="filterDevices()">
+    </div>
+    <div class="filter-buttons">
+        <button class="filter-btn active" onclick="setFilter('all', this)">Toate</button>
+        <button class="filter-btn" onclick="setFilter('online', this)">
+            <span class="status-dot dot-online"></span> Online
+        </button>
+        <button class="filter-btn" onclick="setFilter('offline', this)">
+            <span class="status-dot dot-offline"></span> Offline
+        </button>
+        <button class="filter-btn" onclick="setFilter('Server', this)">Servere</button>
+        <button class="filter-btn" onclick="setFilter('Laptop', this)">Laptopuri</button>
+        <button class="filter-btn" onclick="setFilter('Router', this)">Routere</button>
+    </div>
+    <div class="ms-auto">
+        <span class="devices-count" id="devices-count">-- device-uri</span>
+    </div>
+</div>
+
+<!-- Tabel device-uri -->
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="table diip-table" id="devices-table">
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>IP Address</th>
+                    <th>Hostname</th>
+                    <th>Tip</th>
+                    <th>Sistem de Operare</th>
+                    <th>Owner</th>
+                    <th>Departament</th>
+                    <th>Ultima activitate</th>
+                    <th>Acțiuni</th>
+                </tr>
+            </thead>
+            <tbody id="devices-tbody">
+                <tr>
+                    <td colspan="9" class="text-center py-4">
+                        <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                        Se încarcă device-urile...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Editare device
+     ============================================================ -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content diip-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil-square me-2"></i>
+                    Editează Device
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-device-id">
+
+                <div class="mb-3">
+                    <label class="form-label">IP Address</label>
+                    <input type="text" class="form-control diip-input" id="edit-ip" disabled>
+                    <small class="text-muted">IP-ul nu poate fi modificat manual</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Owner (Responsabil)</label>
+                    <input type="text" class="form-control diip-input" id="edit-owner" placeholder="Ex: Ion Popescu">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Departament</label>
+                    <select class="form-select diip-input" id="edit-department">
+                        <option value="">-- Selectează departament --</option>
+                        <option value="IT">IT</option>
+                        <option value="HR">HR</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Development">Development</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Management">Management</option>
+                        <option value="Operations">Operations</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Note</label>
+                    <textarea class="form-control diip-input" id="edit-notes" rows="3"
+                              placeholder="Observații, detalii suplimentare..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>
+                <button type="button" class="btn btn-primary" onclick="saveDevice()">
+                    <i class="bi bi-save me-1"></i> Salvează
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+// ============================================================
+// Inventar — încarcă și gestionează device-urile
+// ============================================================
+
+let allDevices  = [];
+let activeFilter = 'all';
+
+// ── Încarcă toate device-urile din API ───────────────────────
+async function loadDevices() {
+    try {
+        const resp = await fetch('/api/devices');
+        const data = await resp.json();
+        allDevices = data.devices || [];
+        renderDevices(allDevices);
+    } catch (e) {
+        console.error('Eroare la încărcarea device-urilor:', e);
+        document.getElementById('devices-tbody').innerHTML =
+            '<tr><td colspan="9" class="text-center text-danger">Eroare la încărcare. Verifică conexiunea.</td></tr>';
+    }
+}
+
+// ── Construiește tabelul ─────────────────────────────────────
+function renderDevices(devices) {
+    const tbody = document.getElementById('devices-tbody');
+    document.getElementById('devices-count').textContent = `${devices.length} device-uri`;
+
+    if (devices.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Niciun device găsit.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = devices.map(d => `
+        <tr class="device-row ${d.status}">
+            <!-- Status -->
+            <td>
+                <span class="status-badge status-${d.status}">
+                    <span class="status-dot dot-${d.status}"></span>
+                    ${d.status}
+                </span>
+            </td>
+
+            <!-- IP -->
+            <td><code class="ip-code">${d.ip_address}</code></td>
+
+            <!-- Hostname -->
+            <td class="text-light">${d.hostname || '<span class="text-muted">—</span>'}</td>
+
+            <!-- Tip -->
+            <td>
+                <span class="badge-type badge-${(d.device_type || 'unknown').toLowerCase()}">
+                    ${getDeviceIcon(d.device_type)} ${d.device_type || 'Unknown'}
+                </span>
+            </td>
+
+            <!-- OS -->
+            <td>
+                ${d.os_family ? `<span class="os-badge os-${d.os_family.toLowerCase()}">${getOSIcon(d.os_family)} ${d.os_name || d.os_family}</span>` : '<span class="text-muted">—</span>'}
+            </td>
+
+            <!-- Owner -->
+            <td>${d.owner || '<span class="text-muted">—</span>'}</td>
+
+            <!-- Departament -->
+            <td>${d.department ? `<span class="dept-badge">${d.department}</span>` : '<span class="text-muted">—</span>'}</td>
+
+            <!-- Ultima activitate -->
+            <td><small class="text-muted">${d.last_seen || '—'}</small></td>
+
+            <!-- Acțiuni -->
+            <td>
+                <button class="btn-action" onclick='openEditModal(${JSON.stringify(d)})' title="Editează">
+                    <i class="bi bi-pencil"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// ── Iconițe device ───────────────────────────────────────────
+function getDeviceIcon(type) {
+    const icons = {
+        'Server':  '<i class="bi bi-server"></i>',
+        'Laptop':  '<i class="bi bi-laptop"></i>',
+        'Router':  '<i class="bi bi-router"></i>',
+        'Printer': '<i class="bi bi-printer"></i>',
+        'Unknown': '<i class="bi bi-question-circle"></i>'
+    };
+    return icons[type] || icons['Unknown'];
+}
+
+function getOSIcon(family) {
+    const icons = {
+        'Windows': '<i class="bi bi-windows"></i>',
+        'Linux':   '<i class="bi bi-ubuntu"></i>',
+        'Cisco':   '<i class="bi bi-diagram-3"></i>',
+        'Other':   '<i class="bi bi-pc-display"></i>'
+    };
+    return icons[family] || '';
+}
+
+// ── Filtrare ─────────────────────────────────────────────────
+function setFilter(filter, btn) {
+    activeFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterDevices();
+}
+
+function filterDevices() {
+    const search = document.getElementById('search-input').value.toLowerCase();
+
+    let filtered = allDevices.filter(d => {
+        // Filtru de status/tip
+        const matchFilter =
+            activeFilter === 'all' ||
+            d.status      === activeFilter ||
+            d.device_type === activeFilter;
+
+        // Filtru de căutare text
+        const matchSearch =
+            !search ||
+            (d.ip_address  || '').toLowerCase().includes(search) ||
+            (d.hostname    || '').toLowerCase().includes(search) ||
+            (d.owner       || '').toLowerCase().includes(search) ||
+            (d.department  || '').toLowerCase().includes(search);
+
+        return matchFilter && matchSearch;
+    });
+
+    renderDevices(filtered);
+}
+
+// ── Modal editare ─────────────────────────────────────────────
+function openEditModal(device) {
+    document.getElementById('edit-device-id').value   = device.id;
+    document.getElementById('edit-ip').value          = device.ip_address;
+    document.getElementById('edit-owner').value       = device.owner || '';
+    document.getElementById('edit-department').value  = device.department || '';
+    document.getElementById('edit-notes').value       = device.notes || '';
+
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+async function saveDevice() {
+    const deviceId = document.getElementById('edit-device-id').value;
+    const payload  = {
+        owner:      document.getElementById('edit-owner').value,
+        department: document.getElementById('edit-department').value,
+        notes:      document.getElementById('edit-notes').value
+    };
+
+    try {
+        const resp = await fetch(`/api/devices/${deviceId}`, {
+            method:  'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body:    JSON.stringify(payload)
+        });
+
+        if (resp.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            await loadDevices(); // reîncarcă tabelul
+        } else {
+            alert('Eroare la salvare. Încearcă din nou.');
+        }
+    } catch (e) {
+        alert('Eroare de conexiune.');
+    }
+}
+
+// ── Pornire ───────────────────────────────────────────────────
+loadDevices();
+</script>
+{% endblock %}

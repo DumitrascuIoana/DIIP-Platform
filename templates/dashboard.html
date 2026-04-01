@@ -1,0 +1,395 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Privire de ansamblu asupra infrastructurii{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     CARDURI STATISTICI (rândul de sus)
+     ============================================================ -->
+<div class="row g-4 mb-4">
+
+    <!-- Total Devices -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon icon-blue">
+                <i class="bi bi-hdd-network"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value" id="stat-total">--</div>
+                <div class="stat-label">Total Devices</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Online -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon icon-green">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value text-success" id="stat-online">--</div>
+                <div class="stat-label">Online</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offline -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon icon-red">
+                <i class="bi bi-x-circle-fill"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value text-danger" id="stat-offline">--</div>
+                <div class="stat-label">Offline</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerte necitite -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon icon-yellow">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value text-warning" id="stat-alerts">--</div>
+                <div class="stat-label">Alerte Active</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============================================================
+     GRAFICE (rândul al doilea)
+     ============================================================ -->
+<div class="row g-4 mb-4">
+
+    <!-- Grafic: Tip Device (Donut) -->
+    <div class="col-xl-4 col-md-6">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h5><i class="bi bi-pie-chart-fill me-2"></i>Tip Device</h5>
+            </div>
+            <div class="chart-body">
+                <canvas id="chartDeviceType"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grafic: OS Distribution (Bar) -->
+    <div class="col-xl-4 col-md-6">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h5><i class="bi bi-bar-chart-fill me-2"></i>Sisteme de Operare</h5>
+            </div>
+            <div class="chart-body">
+                <canvas id="chartOS"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grafic: Online vs Offline (Donut) -->
+    <div class="col-xl-4 col-md-12">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h5><i class="bi bi-activity me-2"></i>Status Rețea</h5>
+            </div>
+            <div class="chart-body">
+                <canvas id="chartStatus"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============================================================
+     ALERTE RECENTE + DEVICE-URI OFFLINE
+     ============================================================ -->
+<div class="row g-4">
+
+    <!-- Alerte recente -->
+    <div class="col-xl-6">
+        <div class="table-card">
+            <div class="table-card-header">
+                <h5><i class="bi bi-bell-fill me-2"></i>Alerte Recente</h5>
+                <a href="/alerts" class="btn-link">Vezi toate →</a>
+            </div>
+            <div id="recent-alerts-list">
+                <div class="loading-spinner">
+                    <div class="spinner-border spinner-border-sm text-primary"></div>
+                    <span>Se încarcă...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Device-uri offline -->
+    <div class="col-xl-6">
+        <div class="table-card">
+            <div class="table-card-header">
+                <h5><i class="bi bi-x-circle-fill me-2 text-danger"></i>Device-uri Offline</h5>
+                <a href="/inventory" class="btn-link">Inventar complet →</a>
+            </div>
+            <div id="offline-devices-list">
+                <div class="loading-spinner">
+                    <div class="spinner-border spinner-border-sm text-primary"></div>
+                    <span>Se încarcă...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+// ============================================================
+// Dashboard — încarcă datele și construiește graficele
+// ============================================================
+
+// Culori consistente pentru grafice
+const COLORS = {
+    blue:   '#3b82f6',
+    green:  '#22c55e',
+    red:    '#ef4444',
+    yellow: '#f59e0b',
+    purple: '#8b5cf6',
+    cyan:   '#06b6d4',
+    orange: '#f97316',
+    gray:   '#6b7280'
+};
+
+let chartDeviceType = null;
+let chartOS         = null;
+let chartStatus     = null;
+
+// ── Funcția principală: încarcă toate datele ─────────────────
+async function loadDashboard() {
+    try {
+        const resp  = await fetch('/api/dashboard/stats');
+        const stats = await resp.json();
+
+        // Actualizează cardurile de sus
+        document.getElementById('stat-total').textContent   = stats.total   || 0;
+        document.getElementById('stat-online').textContent  = stats.online  || 0;
+        document.getElementById('stat-offline').textContent = stats.offline || 0;
+        document.getElementById('stat-alerts').textContent  = stats.unread_alerts || 0;
+
+        // Construiește graficele
+        buildChartDeviceType(stats.by_type || []);
+        buildChartOS(stats.by_os || []);
+        buildChartStatus(stats.online || 0, stats.offline || 0, stats.unknown || 0);
+
+    } catch (e) {
+        console.error('Eroare la încărcarea dashboard:', e);
+    }
+}
+
+// ── Grafic 1: Tip Device (Donut) ─────────────────────────────
+function buildChartDeviceType(data) {
+    const labels = data.map(d => d.type);
+    const values = data.map(d => d.count);
+    const colors = [COLORS.blue, COLORS.green, COLORS.yellow, COLORS.purple, COLORS.orange];
+
+    if (chartDeviceType) chartDeviceType.destroy();
+
+    chartDeviceType = new Chart(
+        document.getElementById('chartDeviceType'),
+        {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data:            values,
+                    backgroundColor: colors.slice(0, labels.length),
+                    borderWidth:     2,
+                    borderColor:     '#1e293b'
+                }]
+            },
+            options: {
+                responsive:       true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels:   { color: '#94a3b8', padding: 15, font: { size: 12 } }
+                    }
+                }
+            }
+        }
+    );
+}
+
+// ── Grafic 2: OS Distribution (Bar) ──────────────────────────
+function buildChartOS(data) {
+    const labels = data.map(d => d.os);
+    const values = data.map(d => d.count);
+
+    // Culori pe OS
+    const colorMap = {
+        'Windows': COLORS.blue,
+        'Linux':   COLORS.green,
+        'Cisco':   COLORS.cyan,
+        'Other':   COLORS.gray
+    };
+    const colors = labels.map(l => colorMap[l] || COLORS.purple);
+
+    if (chartOS) chartOS.destroy();
+
+    chartOS = new Chart(
+        document.getElementById('chartOS'),
+        {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label:           'Device-uri',
+                    data:            values,
+                    backgroundColor: colors,
+                    borderRadius:    6,
+                    borderWidth:     0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#94a3b8' },
+                        grid:  { display: false }
+                    },
+                    y: {
+                        ticks:     { color: '#94a3b8', stepSize: 1 },
+                        grid:      { color: '#1e293b' },
+                        beginAtZero: true
+                    }
+                }
+            }
+        }
+    );
+}
+
+// ── Grafic 3: Status Rețea (Donut) ───────────────────────────
+function buildChartStatus(online, offline, unknown) {
+    if (chartStatus) chartStatus.destroy();
+
+    chartStatus = new Chart(
+        document.getElementById('chartStatus'),
+        {
+            type: 'doughnut',
+            data: {
+                labels:   ['Online', 'Offline', 'Necunoscut'],
+                datasets: [{
+                    data:            [online, offline, unknown],
+                    backgroundColor: [COLORS.green, COLORS.red, COLORS.gray],
+                    borderWidth:     2,
+                    borderColor:     '#1e293b'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels:   { color: '#94a3b8', padding: 15, font: { size: 12 } }
+                    }
+                }
+            }
+        }
+    );
+}
+
+// ── Alerte recente ────────────────────────────────────────────
+async function loadRecentAlerts() {
+    try {
+        const resp = await fetch('/api/alerts?unread_only=false');
+        const data = await resp.json();
+        const alerts = (data.alerts || []).slice(0, 5); // primele 5
+
+        const container = document.getElementById('recent-alerts-list');
+
+        if (alerts.length === 0) {
+            container.innerHTML = '<div class="empty-state"><i class="bi bi-check-circle text-success"></i><p>Nicio alertă recentă</p></div>';
+            return;
+        }
+
+        const severityIcon = {
+            'critical': '<i class="bi bi-x-circle-fill text-danger"></i>',
+            'warning':  '<i class="bi bi-exclamation-triangle-fill text-warning"></i>',
+            'info':     '<i class="bi bi-info-circle-fill text-info"></i>'
+        };
+
+        container.innerHTML = alerts.map(a => `
+            <div class="alert-item ${a.is_read ? 'read' : 'unread'}">
+                <div class="alert-icon">${severityIcon[a.severity] || severityIcon['info']}</div>
+                <div class="alert-body">
+                    <div class="alert-message">${a.message}</div>
+                    <div class="alert-meta">${a.ip_address} &bull; ${a.created_at}</div>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        console.error('Eroare alerte:', e);
+    }
+}
+
+// ── Device-uri offline ────────────────────────────────────────
+async function loadOfflineDevices() {
+    try {
+        const resp    = await fetch('/api/devices');
+        const data    = await resp.json();
+        const offline = (data.devices || []).filter(d => d.status === 'offline');
+
+        const container = document.getElementById('offline-devices-list');
+
+        if (offline.length === 0) {
+            container.innerHTML = '<div class="empty-state"><i class="bi bi-check-circle text-success"></i><p>Toate device-urile sunt online!</p></div>';
+            return;
+        }
+
+        container.innerHTML = offline.map(d => `
+            <div class="device-item offline">
+                <div class="device-ip">
+                    <span class="status-dot dot-offline"></span>
+                    <code>${d.ip_address}</code>
+                </div>
+                <div class="device-name">${d.hostname || 'Necunoscut'}</div>
+                <div class="device-type">
+                    <span class="badge-type">${d.device_type || '?'}</span>
+                </div>
+                <div class="device-lastseen">
+                    <small class="text-muted">${d.last_seen || '--'}</small>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        console.error('Eroare device-uri offline:', e);
+    }
+}
+
+// ── Pornire ───────────────────────────────────────────────────
+loadDashboard();
+loadRecentAlerts();
+loadOfflineDevices();
+
+// Reîncarcă la fiecare 60 secunde
+setInterval(() => {
+    loadDashboard();
+    loadRecentAlerts();
+    loadOfflineDevices();
+}, 60000);
+</script>
+{% endblock %}
