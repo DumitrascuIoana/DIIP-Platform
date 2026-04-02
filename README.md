@@ -9,17 +9,19 @@ O platformă web pentru descoperirea, inventarierea și monitorizarea automată 
 ## 📸 Screenshots
 
 ### Dashboard — Privire de ansamblu
-![Dashboard](screenshots/dashboard.png)
 <img width="1916" height="981" alt="dashboard" src="https://github.com/user-attachments/assets/166dd112-bf3e-49c7-a22c-0eaea5b35c2b" />
 
 ### Inventar IT — Toate device-urile din rețea
-![Inventar](screenshots/inventory.png)
+<img width="1917" height="987" alt="inventory" src="https://github.com/user-attachments/assets/b74179c8-ce85-4344-ad9c-d560704988c7" />
+
 
 ### Scanare Rețea — Descoperire automată
-![Scanare](screenshots/scan.png)
+<img width="1914" height="986" alt="scan" src="https://github.com/user-attachments/assets/f5f85d50-7a10-48fe-afc7-919085edcafc" />
+
 
 ### Alerte — Monitorizare evenimente
-![Alerte](screenshots/alerts.png)
+<img width="1915" height="977" alt="alerts" src="https://github.com/user-attachments/assets/1cb5a1b7-0a8e-45e5-9c1f-d92abd2e57d5" />
+
 
 ---
 
