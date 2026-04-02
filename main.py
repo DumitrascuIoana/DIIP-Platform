@@ -39,9 +39,9 @@ async def lifespan(app: FastAPI):
     La oprire: oprim monitorul elegant.
     """
     # ── PORNIRE ───────────────────────────────────────────────
-    print("\n" + "=" * 50)
+    print("\n" + "="*50)
     print(" Digital Infrastructure Intelligence Platform")
-    print("=" * 50)
+    print("="*50)
 
     # Verificăm conexiunea la SQL Server
     test = db.test_connection()
@@ -52,12 +52,12 @@ async def lifespan(app: FastAPI):
 
     # Pornim monitorul de alerte în background
     monitor = AlertMonitor(check_interval_seconds=300)
-    task = asyncio.create_task(monitor.run())
+    task    = asyncio.create_task(monitor.run())
     print("✓ Monitor pornit (verificare la fiecare 5 minute)")
     print("✓ Aplicatie disponibila la: http://127.0.0.1:8000")
-    print("=" * 50 + "\n")
+    print("="*50 + "\n")
 
-    yield  # aplicația rulează între cele două blocuri
+    yield   # aplicația rulează între cele două blocuri
 
     # ── OPRIRE ────────────────────────────────────────────────
     task.cancel()
@@ -68,10 +68,10 @@ async def lifespan(app: FastAPI):
 # CREĂM APLICAȚIA FASTAPI
 # ============================================================
 app = FastAPI(
-    title="Digital Infrastructure Intelligence Platform",
-    description="Network discovery, inventory and monitoring",
-    version="1.0.0",
-    lifespan=lifespan
+    title       = "Digital Infrastructure Intelligence Platform",
+    description = "Network discovery, inventory and monitoring",
+    version     = "1.0.0",
+    lifespan    = lifespan
 )
 
 # Fișiere statice (CSS, JS, imagini)
@@ -90,19 +90,36 @@ scanner = NetworkScanner()
 
 @app.get("/")
 async def page_dashboard(request: Request):
+    """Pagina principală — Dashboard cu statistici și grafice."""
     return templates.TemplateResponse(request=request, name="dashboard.html")
+
 
 @app.get("/inventory")
 async def page_inventory(request: Request):
+    """Pagina Inventar — lista tuturor device-urilor."""
     return templates.TemplateResponse(request=request, name="inventory.html")
+
 
 @app.get("/scan")
 async def page_scan(request: Request):
+    """Pagina Scanare — formular pentru scanare rețea."""
     return templates.TemplateResponse(request=request, name="scan.html")
+
 
 @app.get("/alerts")
 async def page_alerts(request: Request):
+    """Pagina Alerte — lista tuturor alertelor."""
     return templates.TemplateResponse(request=request, name="alerts.html")
+
+
+@app.get("/device/{ip_address}")
+async def page_device_detail(request: Request, ip_address: str):
+    """Pagina de detalii pentru un device specific."""
+    return templates.TemplateResponse(
+        request=request,
+        name="device_detail.html",
+        context={"ip_address": ip_address.replace("-", ".")}
+    )
 
 
 # ============================================================
@@ -141,7 +158,7 @@ async def api_get_device(ip_address: str):
     Ex: /api/devices/192-168-1-10 → caută 192.168.1.10
     """
     try:
-        ip = ip_address.replace("-", ".")
+        ip     = ip_address.replace("-", ".")
         device = db.get_device_by_ip(ip)
         if not device:
             return JSONResponse(content={"error": "Device negasit"}, status_code=404)
@@ -179,7 +196,7 @@ async def api_start_scan(request: Request, background_tasks: BackgroundTasks):
     }
     """
     try:
-        data = await request.json()
+        data     = await request.json()
         ip_range = data.get("ip_range", "").strip()
         detailed = data.get("detailed", False)
 
@@ -195,7 +212,7 @@ async def api_start_scan(request: Request, background_tasks: BackgroundTasks):
             background_tasks.add_task(scanner.scan_network, ip_range)
 
         return JSONResponse(content={
-            "message": f"Scanare pornita pentru {ip_range}",
+            "message":  f"Scanare pornita pentru {ip_range}",
             "ip_range": ip_range,
             "detailed": detailed
         })
@@ -239,6 +256,37 @@ async def api_mark_alert_read(alert_id: int):
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
+# ── Uptime per device ─────────────────────────────────────────
+
+@app.get("/api/devices/{ip_address}/uptime")
+async def api_device_uptime(ip_address: str):
+    """Returnează istoricul uptime pentru un device — ultimele 24 verificări."""
+    try:
+        ip   = ip_address.replace("-", ".")
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT TOP 24
+                ul.checked_at, ul.is_online, ul.response_ms
+            FROM uptime_log ul
+            JOIN devices d ON ul.device_id = d.id
+            WHERE d.ip_address = ?
+            ORDER BY ul.checked_at DESC
+        """, (ip,))
+        columns = [col[0] for col in cursor.description]
+        rows = []
+        for row in cursor.fetchall():
+            item = dict(zip(columns, row))
+            if item["checked_at"]:
+                item["checked_at"] = item["checked_at"].strftime("%H:%M")
+            item["is_online"] = bool(item["is_online"])
+            rows.append(item)
+        conn.close()
+        return JSONResponse(content={"uptime": rows})
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
 # ── Health check ──────────────────────────────────────────────
 
 @app.get("/api/health")
@@ -246,9 +294,9 @@ async def api_health():
     """Verifică starea aplicației și conexiunea DB. Util pentru debugging."""
     db_status = db.test_connection()
     return JSONResponse(content={
-        "app": "running",
+        "app":      "running",
         "database": db_status["status"],
-        "message": db_status.get("message")
+        "message":  db_status.get("message")
     })
 
 
@@ -259,5 +307,4 @@ async def api_health():
 # ============================================================
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

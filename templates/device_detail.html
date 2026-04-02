@@ -1,0 +1,580 @@
+{% extends "base.html" %}
+
+{% block title %}Device {{ ip_address }}{% endblock %}
+{% block page_title %}Detalii Device{% endblock %}
+{% block page_subtitle %}{{ ip_address }}{% endblock %}
+
+{% block content %}
+
+<!-- Buton înapoi -->
+<div class="mb-4">
+    <a href="/inventory" class="btn-back">
+        <i class="bi bi-arrow-left me-2"></i>Înapoi la Inventar
+    </a>
+</div>
+
+<!-- Loading state -->
+<div id="loading-state" class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+    <p class="mt-3 text-muted">Se încarcă detaliile device-ului...</p>
+</div>
+
+<!-- Conținut principal (ascuns până la încărcare) -->
+<div id="main-content" style="display:none">
+
+    <!-- ── Rândul 1: Info principale ── -->
+    <div class="row g-4 mb-4">
+
+        <!-- Card: Informații generale -->
+        <div class="col-xl-4">
+            <div class="detail-card h-100">
+                <div class="detail-card-header">
+                    <div class="device-avatar" id="device-avatar">
+                        <i class="bi bi-hdd-network"></i>
+                    </div>
+                    <div>
+                        <div class="detail-hostname" id="detail-hostname">—</div>
+                        <div id="detail-status-badge"></div>
+                    </div>
+                </div>
+
+                <div class="detail-rows">
+                    <div class="detail-row">
+                        <span class="detail-label">IP Address</span>
+                        <code class="ip-code" id="detail-ip">—</code>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">MAC Address</span>
+                        <span id="detail-mac" class="text-muted">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Tip Device</span>
+                        <span id="detail-type">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Sistem de Operare</span>
+                        <span id="detail-os">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Porturi deschise</span>
+                        <span id="detail-ports">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Prima descoperire</span>
+                        <span id="detail-first-seen" class="text-muted">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Ultima activitate</span>
+                        <span id="detail-last-seen" class="text-muted">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card: Informații organizaționale -->
+        <div class="col-xl-4">
+            <div class="detail-card h-100">
+                <div class="detail-card-title">
+                    <i class="bi bi-building me-2"></i>Informații Organizaționale
+                </div>
+
+                <div class="detail-rows mt-3">
+                    <div class="detail-row">
+                        <span class="detail-label">Owner</span>
+                        <span id="detail-owner" class="text-muted">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Departament</span>
+                        <span id="detail-department">—</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Note</span>
+                        <span id="detail-notes" class="text-muted">—</span>
+                    </div>
+                </div>
+
+                <hr style="border-color: var(--border); margin: 1.5rem 0">
+
+                <!-- Editare rapidă -->
+                <div class="detail-card-title">
+                    <i class="bi bi-pencil me-2"></i>Editează
+                </div>
+                <div class="mt-3">
+                    <div class="mb-2">
+                        <input type="text" class="form-control diip-input" 
+                               id="edit-owner" placeholder="Owner...">
+                    </div>
+                    <div class="mb-2">
+                        <select class="form-select diip-input" id="edit-department">
+                            <option value="">-- Departament --</option>
+                            <option value="IT">IT</option>
+                            <option value="HR">HR</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Development">Development</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Management">Management</option>
+                            <option value="Operations">Operations</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <textarea class="form-control diip-input" id="edit-notes" 
+                                  rows="2" placeholder="Note..."></textarea>
+                    </div>
+                    <button class="btn btn-primary w-100" onclick="saveDevice()">
+                        <i class="bi bi-save me-1"></i> Salvează modificările
+                    </button>
+                    <div id="save-result" class="mt-2" style="display:none"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card: Ping manual -->
+        <div class="col-xl-4">
+            <div class="detail-card h-100">
+                <div class="detail-card-title">
+                    <i class="bi bi-broadcast me-2"></i>Verificare Live
+                </div>
+
+                <p class="text-muted mt-3" style="font-size:0.85rem">
+                    Verifică manual dacă device-ul răspunde la ping în acest moment.
+                </p>
+
+                <button class="btn btn-primary w-100 mt-2" id="btn-ping" onclick="pingDevice()">
+                    <i class="bi bi-broadcast me-2"></i>Ping acum
+                </button>
+
+                <div id="ping-result" class="ping-result-box mt-3" style="display:none"></div>
+
+                <hr style="border-color: var(--border); margin: 1.5rem 0">
+
+                <!-- Statistici uptime -->
+                <div class="detail-card-title">
+                    <i class="bi bi-graph-up me-2"></i>Uptime Statistici
+                </div>
+                <div class="uptime-stats mt-3">
+                    <div class="uptime-stat">
+                        <div class="uptime-stat-value text-success" id="stat-uptime-pct">—</div>
+                        <div class="uptime-stat-label">Uptime 24h</div>
+                    </div>
+                    <div class="uptime-stat">
+                        <div class="uptime-stat-value text-info" id="stat-avg-response">—</div>
+                        <div class="uptime-stat-label">Răspuns mediu</div>
+                    </div>
+                    <div class="uptime-stat">
+                        <div class="uptime-stat-value text-warning" id="stat-checks">—</div>
+                        <div class="uptime-stat-label">Verificări</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Rândul 2: Grafic Uptime ── -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h5><i class="bi bi-activity me-2"></i>Istoric Uptime — ultimele 24 verificări</h5>
+                </div>
+                <div style="padding: 1.5rem; height: 200px;">
+                    <canvas id="chartUptime"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Rândul 3: Alerte device ── -->
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="table-card">
+                <div class="table-card-header">
+                    <h5><i class="bi bi-bell-fill me-2"></i>Alerte pentru acest device</h5>
+                </div>
+                <div id="device-alerts-list">
+                    <div class="loading-spinner">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                        <span>Se încarcă alertele...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Device negăsit -->
+<div id="not-found-state" style="display:none" class="text-center py-5">
+    <i class="bi bi-question-circle text-muted" style="font-size:3rem"></i>
+    <p class="mt-3 text-muted">Device-ul nu a fost găsit în baza de date.</p>
+    <a href="/inventory" class="btn btn-primary mt-2">Înapoi la Inventar</a>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+// ============================================================
+// Device Detail Page
+// ============================================================
+
+const IP_ADDRESS = "{{ ip_address }}";
+let deviceId     = null;
+let chartUptime  = null;
+
+// ── Încarcă datele device-ului ───────────────────────────────
+async function loadDevice() {
+    try {
+        const ipForUrl = IP_ADDRESS.replace(/\./g, "-");
+        const resp     = await fetch(`/api/devices/${ipForUrl}`);
+
+        if (resp.status === 404) {
+            document.getElementById('loading-state').style.display  = 'none';
+            document.getElementById('not-found-state').style.display = 'block';
+            return;
+        }
+
+        const device = await resp.json();
+        deviceId     = device.id;
+
+        // Populăm câmpurile
+        document.getElementById('detail-ip').textContent         = device.ip_address || '—';
+        document.getElementById('detail-hostname').textContent   = device.hostname || 'Necunoscut';
+        document.getElementById('detail-mac').textContent        = device.mac_address || '—';
+        document.getElementById('detail-os').textContent         = device.os_name || '—';
+        document.getElementById('detail-first-seen').textContent = device.first_seen || '—';
+        document.getElementById('detail-last-seen').textContent  = device.last_seen || '—';
+        document.getElementById('detail-owner').textContent      = device.owner || '—';
+        document.getElementById('detail-notes').textContent      = device.notes || '—';
+
+        // Câmpuri editabile
+        document.getElementById('edit-owner').value       = device.owner || '';
+        document.getElementById('edit-department').value  = device.department || '';
+        document.getElementById('edit-notes').value       = device.notes || '';
+
+        // Tip device cu icon
+        const typeIcons = {
+            'Server':  'bi-server',
+            'Laptop':  'bi-laptop',
+            'Router':  'bi-router',
+            'Printer': 'bi-printer',
+            'Unknown': 'bi-question-circle'
+        };
+        const icon = typeIcons[device.device_type] || 'bi-hdd-network';
+        document.getElementById('device-avatar').innerHTML = `<i class="bi ${icon}"></i>`;
+        document.getElementById('detail-type').innerHTML  = `<span class="badge-type badge-${(device.device_type||'unknown').toLowerCase()}">${device.device_type || 'Unknown'}</span>`;
+
+        // Departament
+        document.getElementById('detail-department').innerHTML = device.department
+            ? `<span class="dept-badge">${device.department}</span>`
+            : '—';
+
+        // Porturi
+        document.getElementById('detail-ports').innerHTML = device.open_ports
+            ? device.open_ports.split(',').map(p =>
+                `<span class="port-badge">${p.trim()}</span>`
+              ).join(' ')
+            : '—';
+
+        // Status badge
+        const statusColors = { online: 'status-online', offline: 'status-offline', unknown: 'status-unknown' };
+        document.getElementById('detail-status-badge').innerHTML =
+            `<span class="status-badge ${statusColors[device.status] || 'status-unknown'}">
+                <span class="status-dot dot-${device.status}"></span>
+                ${device.status}
+             </span>`;
+
+        // Afișăm conținutul
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('main-content').style.display  = 'block';
+
+        // Încarcă uptime și alerte
+        loadUptime();
+        loadDeviceAlerts();
+
+    } catch (e) {
+        console.error('Eroare la încărcarea device-ului:', e);
+    }
+}
+
+// ── Grafic Uptime ────────────────────────────────────────────
+async function loadUptime() {
+    try {
+        const ipForUrl = IP_ADDRESS.replace(/\./g, "-");
+        const resp     = await fetch(`/api/devices/${ipForUrl}/uptime`);
+        const data     = await resp.json();
+        const rows     = (data.uptime || []).reverse(); // cronologic
+
+        // Statistici
+        const total   = rows.length;
+        const online  = rows.filter(r => r.is_online).length;
+        const pct     = total > 0 ? Math.round((online / total) * 100) : 0;
+        const avgMs   = rows.filter(r => r.response_ms).reduce((a, b) => a + b.response_ms, 0)
+                        / (rows.filter(r => r.response_ms).length || 1);
+
+        document.getElementById('stat-uptime-pct').textContent    = `${pct}%`;
+        document.getElementById('stat-avg-response').textContent  = avgMs ? `${Math.round(avgMs)}ms` : '—';
+        document.getElementById('stat-checks').textContent        = total;
+
+        // Grafic
+        const labels = rows.map(r => r.checked_at);
+        const values = rows.map(r => r.is_online ? (r.response_ms || 1) : 0);
+        const colors = rows.map(r => r.is_online ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)');
+
+        if (chartUptime) chartUptime.destroy();
+
+        chartUptime = new Chart(document.getElementById('chartUptime'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label:           'Response time (ms)',
+                    data:            values,
+                    backgroundColor: colors,
+                    borderRadius:    4,
+                    borderWidth:     0
+                }]
+            },
+            options: {
+                responsive:          true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const row = rows[ctx.dataIndex];
+                                return row.is_online
+                                    ? `Online — ${row.response_ms || '?'}ms`
+                                    : 'Offline';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } },
+                    y: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' }, beginAtZero: true }
+                }
+            }
+        });
+
+    } catch (e) {
+        console.error('Eroare uptime:', e);
+    }
+}
+
+// ── Alerte device ─────────────────────────────────────────────
+async function loadDeviceAlerts() {
+    try {
+        const resp   = await fetch('/api/alerts');
+        const data   = await resp.json();
+        const alerts = (data.alerts || []).filter(a => a.ip_address === IP_ADDRESS);
+        const container = document.getElementById('device-alerts-list');
+
+        if (alerts.length === 0) {
+            container.innerHTML = '<div class="empty-state py-3"><i class="bi bi-check-circle text-success"></i><p>Nicio alertă pentru acest device.</p></div>';
+            return;
+        }
+
+        const icons = {
+            'critical': '<i class="bi bi-x-circle-fill text-danger"></i>',
+            'warning':  '<i class="bi bi-exclamation-triangle-fill text-warning"></i>',
+            'info':     '<i class="bi bi-info-circle-fill text-info"></i>'
+        };
+
+        container.innerHTML = alerts.map(a => `
+            <div class="alert-item ${a.is_read ? 'read' : 'unread'}">
+                <div class="alert-icon">${icons[a.severity] || icons['info']}</div>
+                <div class="alert-body">
+                    <div class="alert-message">${a.message}</div>
+                    <div class="alert-meta">${a.created_at}</div>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        console.error('Eroare alerte:', e);
+    }
+}
+
+// ── Ping manual ───────────────────────────────────────────────
+async function pingDevice() {
+    const btn       = document.getElementById('btn-ping');
+    const resultBox = document.getElementById('ping-result');
+
+    btn.disabled    = true;
+    btn.innerHTML   = '<div class="spinner-border spinner-border-sm me-2"></div>Se pingează...';
+    resultBox.style.display = 'none';
+
+    try {
+        const ipForUrl = IP_ADDRESS.replace(/\./g, "-");
+        const resp     = await fetch(`/api/devices/${ipForUrl}`);
+        const device   = await resp.json();
+
+        resultBox.style.display = 'block';
+
+        if (device.status === 'online') {
+            resultBox.innerHTML = `
+                <div class="ping-success">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    <strong>Online!</strong> Device-ul răspunde.
+                </div>`;
+        } else {
+            resultBox.innerHTML = `
+                <div class="ping-fail">
+                    <i class="bi bi-x-circle-fill text-danger"></i>
+                    <strong>Offline!</strong> Device-ul nu răspunde.
+                </div>`;
+        }
+
+    } catch (e) {
+        resultBox.style.display = 'block';
+        resultBox.innerHTML = '<div class="ping-fail"><i class="bi bi-x-circle-fill text-danger"></i> Eroare la ping.</div>';
+    }
+
+    btn.disabled  = false;
+    btn.innerHTML = '<i class="bi bi-broadcast me-2"></i>Ping acum';
+}
+
+// ── Salvează modificările ─────────────────────────────────────
+async function saveDevice() {
+    if (!deviceId) return;
+
+    const payload = {
+        owner:      document.getElementById('edit-owner').value,
+        department: document.getElementById('edit-department').value,
+        notes:      document.getElementById('edit-notes').value
+    };
+
+    try {
+        const resp      = await fetch(`/api/devices/${deviceId}`, {
+            method:  'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body:    JSON.stringify(payload)
+        });
+        const resultBox = document.getElementById('save-result');
+        resultBox.style.display = 'block';
+
+        if (resp.ok) {
+            resultBox.innerHTML = '<div class="alert alert-success py-2">✓ Salvat cu succes!</div>';
+            loadDevice(); // reîncarcă datele
+        } else {
+            resultBox.innerHTML = '<div class="alert alert-danger py-2">Eroare la salvare.</div>';
+        }
+
+        setTimeout(() => { resultBox.style.display = 'none'; }, 3000);
+
+    } catch (e) {
+        console.error('Eroare salvare:', e);
+    }
+}
+
+// Pornire
+loadDevice();
+</script>
+
+<style>
+/* ── Stiluri specifice paginii de detalii ── */
+.btn-back {
+    color:           var(--text-muted);
+    text-decoration: none;
+    font-size:       0.875rem;
+    display:         inline-flex;
+    align-items:     center;
+    transition:      color 0.15s;
+}
+.btn-back:hover { color: var(--text-primary); }
+
+.detail-card {
+    background:    var(--bg-card);
+    border:        1px solid var(--border);
+    border-radius: var(--radius);
+    padding:       1.5rem;
+}
+
+.detail-card-header {
+    display:     flex;
+    align-items: center;
+    gap:         1rem;
+    margin-bottom: 1.5rem;
+}
+
+.device-avatar {
+    width:           56px;
+    height:          56px;
+    background:      rgba(59, 130, 246, 0.15);
+    border-radius:   var(--radius);
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    font-size:       1.5rem;
+    color:           var(--accent-blue);
+    flex-shrink:     0;
+}
+
+.detail-hostname {
+    font-size:   1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+
+.detail-card-title {
+    font-size:   0.8rem;
+    font-weight: 600;
+    color:       var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.detail-rows { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.detail-row {
+    display:         flex;
+    justify-content: space-between;
+    align-items:     center;
+    padding-bottom:  0.75rem;
+    border-bottom:   1px solid var(--border);
+    font-size:       0.875rem;
+}
+.detail-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+.detail-label {
+    color:     var(--text-muted);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.port-badge {
+    display:       inline-block;
+    background:    rgba(6, 182, 212, 0.1);
+    color:         var(--accent-cyan);
+    border:        1px solid rgba(6, 182, 212, 0.2);
+    padding:       0.1rem 0.4rem;
+    border-radius: var(--radius-sm);
+    font-size:     0.75rem;
+    font-family:   var(--font-mono);
+    margin:        0.1rem;
+}
+
+.uptime-stats {
+    display: flex;
+    gap:     1rem;
+}
+.uptime-stat { flex: 1; text-align: center; }
+.uptime-stat-value { font-size: 1.5rem; font-weight: 700; font-family: var(--font-mono); }
+.uptime-stat-label { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+.ping-result-box {
+    background:    var(--bg-dark);
+    border:        1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding:       0.75rem 1rem;
+    font-size:     0.875rem;
+}
+.ping-success, .ping-fail {
+    display:     flex;
+    align-items: center;
+    gap:         0.5rem;
+}
+</style>
+{% endblock %}

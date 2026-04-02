@@ -162,7 +162,7 @@ function renderDevices(devices) {
             </td>
 
             <!-- IP -->
-            <td><code class="ip-code">${d.ip_address}</code></td>
+            <td><a href="/device/${d.ip_address.replace(/\./g, '-')}" class="ip-code">${d.ip_address}</a></td>
 
             <!-- Hostname -->
             <td class="text-light">${d.hostname || '<span class="text-muted">—</span>'}</td>
