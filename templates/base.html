@@ -4,24 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}DIIP{% endblock %} — Digital Infrastructure Intelligence Platform</title>
-
-    <!-- Bootstrap 5 — grid, componente UI -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- CSS-ul nostru -->
     <link href="/static/style.css" rel="stylesheet">
 </head>
 <body>
 
-<!-- ============================================================
-     SIDEBAR — navigare principală
-     ============================================================ -->
 <div class="sidebar">
-
-    <!-- Logo -->
     <div class="sidebar-brand">
         <div class="brand-icon">
             <i class="bi bi-diagram-3-fill"></i>
@@ -34,7 +24,6 @@
 
     <hr class="sidebar-divider">
 
-    <!-- Meniu navigare -->
     <nav class="sidebar-nav">
         <a href="/" class="nav-item {% if request.url.path == '/' %}active{% endif %}">
             <i class="bi bi-grid-1x2-fill"></i>
@@ -51,14 +40,12 @@
         <a href="/alerts" class="nav-item {% if request.url.path == '/alerts' %}active{% endif %}">
             <i class="bi bi-bell-fill"></i>
             <span>Alerte</span>
-            <!-- Badge alerte necitite — actualizat din JS -->
             <span class="badge-alert" id="nav-alert-count" style="display:none"></span>
         </a>
     </nav>
 
     <hr class="sidebar-divider">
 
-    <!-- Status DB — jos în sidebar -->
     <div class="sidebar-footer">
         <div class="db-status" id="db-status">
             <span class="status-dot dot-online"></span>
@@ -68,49 +55,37 @@
     </div>
 </div>
 
-<!-- ============================================================
-     CONȚINUT PRINCIPAL
-     ============================================================ -->
 <div class="main-content">
-
-    <!-- Header top -->
     <div class="top-header">
         <div class="page-title">
             <h1>{% block page_title %}Dashboard{% endblock %}</h1>
             <p class="page-subtitle">{% block page_subtitle %}{% endblock %}</p>
         </div>
         <div class="header-actions">
-            <!-- Iconița de alerte cu badge -->
             <div class="alert-bell" onclick="window.location='/alerts'">
                 <i class="bi bi-bell"></i>
                 <span class="bell-badge" id="bell-badge" style="display:none">0</span>
             </div>
-            <!-- Timestamp ultima actualizare -->
             <div class="last-updated">
                 <i class="bi bi-clock"></i>
                 <span id="last-updated-time">--:--</span>
             </div>
+            <!-- Toggle Dark/Light mode -->
+            <div class="theme-toggle" onclick="toggleTheme()" title="Schimbă tema">
+                <i class="bi bi-sun-fill" id="theme-icon"></i>
+            </div>
         </div>
     </div>
 
-    <!-- Conținutul paginii curente -->
     <div class="page-content">
         {% block content %}{% endblock %}
     </div>
-
 </div>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Chart.js — grafice -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
-// ============================================================
-// Script global — rulează pe toate paginile
-// ============================================================
-
-// Actualizează timestamp-ul din header
 function updateTimestamp() {
     const now  = new Date();
     const time = now.toLocaleTimeString('ro-RO', {hour: '2-digit', minute: '2-digit'});
@@ -118,23 +93,20 @@ function updateTimestamp() {
 }
 updateTimestamp();
 
-// Încarcă numărul de alerte necitite și actualizează badge-urile
 async function loadUnreadAlerts() {
     try {
-        const resp = await fetch('/api/alerts?unread_only=true');
-        const data = await resp.json();
+        const resp  = await fetch('/api/alerts?unread_only=true');
+        const data  = await resp.json();
         const count = data.alerts ? data.alerts.length : 0;
-
         const bellBadge     = document.getElementById('bell-badge');
         const navAlertCount = document.getElementById('nav-alert-count');
-
         if (count > 0) {
-            bellBadge.textContent     = count;
-            bellBadge.style.display   = 'flex';
-            navAlertCount.textContent = count;
+            bellBadge.textContent       = count;
+            bellBadge.style.display     = 'flex';
+            navAlertCount.textContent   = count;
             navAlertCount.style.display = 'flex';
         } else {
-            bellBadge.style.display   = 'none';
+            bellBadge.style.display     = 'none';
             navAlertCount.style.display = 'none';
         }
     } catch (e) {
@@ -143,7 +115,27 @@ async function loadUnreadAlerts() {
 }
 loadUnreadAlerts();
 
-// Reîncarcă alertele la fiecare 30 secunde
+// Dark/Light mode toggle
+function toggleTheme() {
+    const body = document.body;
+    const icon = document.getElementById('theme-icon');
+    body.classList.toggle('light-mode');
+    if (body.classList.contains('light-mode')) {
+        icon.className = 'bi bi-moon-fill';
+        localStorage.setItem('theme', 'light');
+    } else {
+        icon.className = 'bi bi-sun-fill';
+        localStorage.setItem('theme', 'dark');
+    }
+}
+
+// Aplică tema salvată la încărcare
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'light') {
+    document.body.classList.add('light-mode');
+    document.getElementById('theme-icon').className = 'bi bi-moon-fill';
+}
+
 setInterval(loadUnreadAlerts, 30000);
 setInterval(updateTimestamp, 60000);
 </script>
