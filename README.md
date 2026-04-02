@@ -6,10 +6,19 @@ O platformă web pentru descoperirea, inventarierea și monitorizarea automată 
 
 ---
 
-## 📸 Screenshot
+## 📸 Screenshots
 
-![DIIP Dashboard](https://i.imgur.com/placeholder.png)
-> Dashboard cu statistici în timp real, grafice și alerte automate
+### Dashboard — Privire de ansamblu
+![Dashboard](screenshots/dashboard.png)
+
+### Inventar IT — Toate device-urile din rețea
+![Inventar](screenshots/inventory.png)
+
+### Scanare Rețea — Descoperire automată
+![Scanare](screenshots/scan.png)
+
+### Alerte — Monitorizare evenimente
+![Alerte](screenshots/alerts.png)
 
 ---
 
@@ -54,12 +63,13 @@ DIIP-Platform/
 │   └── alerts.html            # Alerte și notificări
 ├── static/
 │   └── style.css              # Stiluri CSS (tema dark)
+├── screenshots/               # Screenshot-uri aplicație
 ├── main.py                    # Aplicația FastAPI + toate rutele
 ├── database.py                # Conexiunea și operațiile SQL Server
 ├── scanner.py                 # Network scanner cu Nmap
 ├── monitor.py                 # Monitor automat de alerte
 ├── requirements.txt           # Dependențe Python
-└── .env.example               # Template configurare (fără date sensibile)
+└── .env.example               # Template configurare
 ```
 
 ---
@@ -118,10 +128,10 @@ Deschide browserul la: **http://127.0.0.1:8080** 🎉
 ## 📊 Schema bazei de date
 
 ```
-devices          → toate device-urile descoperite în rețea
-scan_history     → istoricul scanărilor efectuate
-alerts           → alertele generate de monitor
-uptime_log       → istoricul de disponibilitate per device
+devices       → toate device-urile descoperite în rețea
+scan_history  → istoricul scanărilor efectuate
+alerts        → alertele generate de monitor
+uptime_log    → istoricul de disponibilitate per device
 ```
 
 ---
