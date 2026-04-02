@@ -17,7 +17,7 @@ import time
 from datetime import datetime
 from database import db
 from scanner import NetworkScanner
-
+from email_service import email_service
 
 # ============================================================
 # CLASA AlertMonitor
@@ -173,6 +173,8 @@ class AlertMonitor:
             severity=severity
         )
 
+        email_service.send_alert(device, "offline")
+
     def _create_back_online_alert(self, device: dict, device_id: int):
         """
         Creează o notificare când un device revine online.
@@ -190,6 +192,7 @@ class AlertMonitor:
             message=message,
             severity="info"
         )
+        email_service.send_alert(device, "back_online")
 
     # ==========================================================
     # METODĂ UTILĂ: check_single_device

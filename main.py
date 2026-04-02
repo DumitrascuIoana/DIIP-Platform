@@ -21,10 +21,16 @@ from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import asyncio
 
+from fastapi.responses import StreamingResponse
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
+from io import BytesIO
+import csv
+
 from database import db
 from scanner import NetworkScanner
 from monitor import AlertMonitor
-
+from email_service import email_service
 
 # ============================================================
 # LIFESPAN — rulează la pornirea și oprirea aplicației
@@ -305,6 +311,154 @@ async def api_health():
 # Recomandat: uvicorn main:app --reload
 # Alternativ:  python main.py
 # ============================================================
+
+# ── Export Excel ──────────────────────────────────────────────
+
+@app.get("/api/export/excel")
+async def export_excel():
+    """
+    Exportă inventarul complet în format Excel (.xlsx).
+    Returneaza un fisier descarcabil direct din browser.
+    """
+    try:
+        devices = db.get_all_devices()
+
+        # Creăm workbook-ul Excel
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Inventar IT"
+
+        # ── Stiluri ──────────────────────────────────────────
+        # Header: fundal albastru, text alb, bold
+        header_fill = PatternFill("solid", fgColor="1e3a5f")
+        header_font = Font(bold=True, color="FFFFFF", size=11)
+        header_align = Alignment(horizontal="center", vertical="center")
+
+        # Online: verde deschis
+        online_fill = PatternFill("solid", fgColor="d1fae5")
+        # Offline: roșu deschis
+        offline_fill = PatternFill("solid", fgColor="fee2e2")
+
+        # ── Header row ────────────────────────────────────────
+        headers = [
+            "ID", "IP Address", "Hostname", "Tip Device",
+            "Sistem de Operare", "OS Family", "MAC Address",
+            "Owner", "Departament", "Status",
+            "Porturi Deschise", "Prima Descoperire",
+            "Ultima Activitate", "Note"
+        ]
+
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_align
+
+        # ── Date ──────────────────────────────────────────────
+        for row_num, device in enumerate(devices, 2):
+            row_data = [
+                device.get("id"),
+                device.get("ip_address"),
+                device.get("hostname"),
+                device.get("device_type"),
+                device.get("os_name"),
+                device.get("os_family"),
+                device.get("mac_address"),
+                device.get("owner"),
+                device.get("department"),
+                device.get("status"),
+                device.get("open_ports"),
+                device.get("first_seen"),
+                device.get("last_seen"),
+                device.get("notes"),
+            ]
+
+            for col_num, value in enumerate(row_data, 1):
+                cell = ws.cell(row=row_num, column=col_num, value=value)
+                cell.alignment = Alignment(vertical="center")
+
+            # Colorăm rândul după status
+            status = device.get("status", "")
+            if status == "online":
+                for col in range(1, len(headers) + 1):
+                    ws.cell(row=row_num, column=col).fill = online_fill
+            elif status == "offline":
+                for col in range(1, len(headers) + 1):
+                    ws.cell(row=row_num, column=col).fill = offline_fill
+
+        # ── Lățime coloane automată ───────────────────────────
+        col_widths = [6, 16, 20, 14, 22, 12, 18, 18, 14, 10, 18, 20, 20, 30]
+        for col_num, width in enumerate(col_widths, 1):
+            ws.column_dimensions[
+                openpyxl.utils.get_column_letter(col_num)
+            ].width = width
+
+        # Înghețăm primul rând (header rămâne vizibil la scroll)
+        ws.freeze_panes = "A2"
+
+        # ── Salvăm în memorie și trimitem ─────────────────────
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=inventar_DIIP.xlsx"}
+        )
+
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+# ── Export CSV ────────────────────────────────────────────────
+
+@app.get("/api/export/csv")
+async def export_csv():
+    """
+    Exportă inventarul complet în format CSV.
+    CSV = text simplu, poate fi deschis în Excel, Google Sheets etc.
+    """
+    try:
+        devices = db.get_all_devices()
+
+        # Creăm CSV în memorie
+        buffer = BytesIO()
+        # CSV-ul trebuie să fie text, îl encodăm UTF-8
+        import io
+        text_buffer = io.StringIO()
+
+        headers = [
+            "id", "ip_address", "hostname", "device_type",
+            "os_name", "os_family", "mac_address",
+            "owner", "department", "status",
+            "open_ports", "first_seen", "last_seen", "notes"
+        ]
+
+        writer = csv.DictWriter(text_buffer, fieldnames=headers, extrasaction='ignore')
+        writer.writeheader()
+        writer.writerows(devices)
+
+        # Convertim în bytes
+        buffer = BytesIO(text_buffer.getvalue().encode("utf-8-sig"))
+        # utf-8-sig = adaugă BOM la început → Excel îl deschide corect cu diacritice
+
+        return StreamingResponse(
+            buffer,
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=inventar_DIIP.csv"}
+        )
+
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@app.get("/api/email/test")
+async def api_test_email():
+    """Trimite un email de test — verifică configurația."""
+    result = email_service.test_email()
+    return JSONResponse(content=result)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

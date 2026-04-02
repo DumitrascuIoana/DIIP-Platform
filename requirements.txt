@@ -50,3 +50,5 @@ python-dotenv==1.0.1
 apscheduler==3.10.4
 # Scheduler = rulează taskuri automat la intervale fixe
 # Ex: verifică device-urile la fiecare 5 minute (monitorizare)
+
+openpyxl==3.1.2
