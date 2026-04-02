@@ -9,18 +9,22 @@ O platformă web pentru descoperirea, inventarierea și monitorizarea automată 
 ## 📸 Screenshots
 
 ### Dashboard — Privire de ansamblu
-<img width="1916" height="981" alt="dashboard" src="https://github.com/user-attachments/assets/166dd112-bf3e-49c7-a22c-0eaea5b35c2b" />
+<img width="1916" height="984" alt="image" src="https://github.com/user-attachments/assets/aeb35c62-eb9a-4a6d-af50-16c46a6f1f20" />
+
 
 ### Inventar IT — Toate device-urile din rețea
-<img width="1917" height="987" alt="inventory" src="https://github.com/user-attachments/assets/b74179c8-ce85-4344-ad9c-d560704988c7" />
+<img width="1917" height="973" alt="image" src="https://github.com/user-attachments/assets/532537c3-e9cd-4199-9f79-c082cd542d3e" />
+
 
 
 ### Scanare Rețea — Descoperire automată
-<img width="1914" height="986" alt="scan" src="https://github.com/user-attachments/assets/f5f85d50-7a10-48fe-afc7-919085edcafc" />
+<img width="1912" height="977" alt="image" src="https://github.com/user-attachments/assets/284941e7-3323-4622-997a-487acdd51fc6" />
+
 
 
 ### Alerte — Monitorizare evenimente
-<img width="1915" height="977" alt="alerts" src="https://github.com/user-attachments/assets/1cb5a1b7-0a8e-45e5-9c1f-d92abd2e57d5" />
+<img width="1915" height="975" alt="image" src="https://github.com/user-attachments/assets/df79b6f2-fce9-4e08-9159-d11918481242" />
+
 
 
 ---
