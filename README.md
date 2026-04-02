@@ -10,6 +10,7 @@ O platformă web pentru descoperirea, inventarierea și monitorizarea automată 
 
 ### Dashboard — Privire de ansamblu
 ![Dashboard](screenshots/dashboard.png)
+<img width="1916" height="981" alt="dashboard" src="https://github.com/user-attachments/assets/166dd112-bf3e-49c7-a22c-0eaea5b35c2b" />
 
 ### Inventar IT — Toate device-urile din rețea
 ![Inventar](screenshots/inventory.png)
