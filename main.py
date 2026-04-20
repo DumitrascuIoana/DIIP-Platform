@@ -31,6 +31,8 @@ from database import db
 from scanner import NetworkScanner
 from monitor import AlertMonitor
 from email_service import email_service
+from auth import auth_manager
+from fastapi.responses import RedirectResponse
 
 # ============================================================
 # LIFESPAN — rulează la pornirea și oprirea aplicației
@@ -93,38 +95,146 @@ scanner = NetworkScanner()
 # ============================================================
 # RUTE DE PAGINI (returnează HTML)
 # ============================================================
+# ============================================================
+# RUTE AUTENTIFICARE — adauga in main.py
+# ============================================================
+
+# ── Pagina Login ──────────────────────────────────────────────
+@app.get("/login")
+async def page_login(request: Request):
+    """Pagina de login — singura pagina publica."""
+    # Daca e deja logat, il trimitem la dashboard
+    user = auth_manager.get_current_user(request)
+    if user:
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse(request=request, name="login.html")
+
+
+# ── API Login ─────────────────────────────────────────────────
+@app.post("/api/auth/login")
+async def api_login(request: Request):
+    """
+    Primeste username + parola, verifica si creeaza sesiune.
+    Seteaza cookie cu token-ul de sesiune.
+    """
+    try:
+        data = await request.json()
+        username = data.get("username", "").strip()
+        password = data.get("password", "")
+        ip_address = request.client.host
+
+        result = auth_manager.login(username, password, ip_address)
+
+        if result["success"]:
+            # Cream raspunsul si setam cookie-ul
+            response = JSONResponse(content={
+                "success": True,
+                "user": result["user"]
+            })
+            # Cookie cu token — httponly = nu poate fi accesat din JavaScript
+            # (protectie XSS)
+            response.set_cookie(
+                key="session_token",
+                value=result["token"],
+                httponly=True,  # nu accesibil din JS
+                max_age=8 * 3600,  # 8 ore in secunde
+                samesite="lax"
+            )
+            return response
+        else:
+            return JSONResponse(
+                content={"success": False, "message": result["message"]},
+                status_code=401
+            )
+    except Exception as e:
+        return JSONResponse(
+            content={"success": False, "message": str(e)},
+            status_code=500
+        )
+
+
+# ── API Logout ────────────────────────────────────────────────
+@app.post("/api/auth/logout")
+async def api_logout(request: Request):
+    """Invalideaza sesiunea si sterge cookie-ul."""
+    auth_manager.logout(request)
+
+    response = JSONResponse(content={"success": True})
+    response.delete_cookie("session_token")
+    return response
+
+
+# ── API: user curent ──────────────────────────────────────────
+@app.get("/api/auth/me")
+async def api_me(request: Request):
+    """Returneaza informatiile userului logat."""
+    user = auth_manager.get_current_user(request)
+    if not user:
+        return JSONResponse(
+            content={"authenticated": False},
+            status_code=401
+        )
+    return JSONResponse(content={"authenticated": True, "user": user})
+
+
+# ── PAGINI PROTEJATE (inlocuieste cele existente) ─────────────
 
 @app.get("/")
 async def page_dashboard(request: Request):
-    """Pagina principală — Dashboard cu statistici și grafice."""
-    return templates.TemplateResponse(request=request, name="dashboard.html")
+    user = auth_manager.get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+    return templates.TemplateResponse(
+        request=request, name="dashboard.html",
+        context={"user": user}
+    )
 
 
 @app.get("/inventory")
 async def page_inventory(request: Request):
-    """Pagina Inventar — lista tuturor device-urilor."""
-    return templates.TemplateResponse(request=request, name="inventory.html")
+    user = auth_manager.get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+    return templates.TemplateResponse(
+        request=request, name="inventory.html",
+        context={"user": user}
+    )
 
 
 @app.get("/scan")
 async def page_scan(request: Request):
-    """Pagina Scanare — formular pentru scanare rețea."""
-    return templates.TemplateResponse(request=request, name="scan.html")
+    user = auth_manager.get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+    return templates.TemplateResponse(
+        request=request, name="scan.html",
+        context={"user": user}
+    )
 
 
 @app.get("/alerts")
 async def page_alerts(request: Request):
-    """Pagina Alerte — lista tuturor alertelor."""
-    return templates.TemplateResponse(request=request, name="alerts.html")
+    user = auth_manager.get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+    return templates.TemplateResponse(
+        request=request, name="alerts.html",
+        context={"user": user}
+    )
 
 
 @app.get("/device/{ip_address}")
 async def page_device_detail(request: Request, ip_address: str):
-    """Pagina de detalii pentru un device specific."""
+    user = auth_manager.get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
     return templates.TemplateResponse(
         request=request,
         name="device_detail.html",
-        context={"ip_address": ip_address.replace("-", ".")}
+        context={
+            "ip_address": ip_address.replace("-", "."),
+            "user": user
+        }
     )
 
 

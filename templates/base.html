@@ -11,6 +11,7 @@
 </head>
 <body>
 
+<!-- SIDEBAR -->
 <div class="sidebar">
     <div class="sidebar-brand">
         <div class="brand-icon">
@@ -47,7 +48,7 @@
     <hr class="sidebar-divider">
 
     <div class="sidebar-footer">
-        <div class="db-status" id="db-status">
+        <div class="db-status">
             <span class="status-dot dot-online"></span>
             <span class="status-text">SQL Server conectat</span>
         </div>
@@ -55,44 +56,72 @@
     </div>
 </div>
 
+<!-- MAIN CONTENT -->
 <div class="main-content">
+
+    <!-- HEADER -->
     <div class="top-header">
         <div class="page-title">
             <h1>{% block page_title %}Dashboard{% endblock %}</h1>
             <p class="page-subtitle">{% block page_subtitle %}{% endblock %}</p>
         </div>
+
         <div class="header-actions">
-            <div class="alert-bell" onclick="window.location='/alerts'">
+
+            <!-- Alerte -->
+            <div class="alert-bell" onclick="window.location='/alerts'" title="Alerte">
                 <i class="bi bi-bell"></i>
                 <span class="bell-badge" id="bell-badge" style="display:none">0</span>
             </div>
+
+            <!-- Timestamp -->
             <div class="last-updated">
                 <i class="bi bi-clock"></i>
                 <span id="last-updated-time">--:--</span>
             </div>
-            <!-- Toggle Dark/Light mode -->
+
+            <!-- Dark/Light mode -->
             <div class="theme-toggle" onclick="toggleTheme()" title="Schimbă tema">
                 <i class="bi bi-sun-fill" id="theme-icon"></i>
             </div>
+
+            <!-- User info + Logout -->
+            <div class="header-user">
+                <span class="header-username" id="header-username">
+                    <i class="bi bi-person-circle"></i>
+                    <span id="username-text">...</span>
+                    <span class="role-pill" id="role-pill"></span>
+                </span>
+                <button class="btn-logout" onclick="doLogout()" title="Logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </div>
+
         </div>
     </div>
 
+    <!-- PAGE CONTENT -->
     <div class="page-content">
         {% block content %}{% endblock %}
     </div>
+
 </div>
 
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
+// ── Timestamp ─────────────────────────────────────────────────
 function updateTimestamp() {
     const now  = new Date();
     const time = now.toLocaleTimeString('ro-RO', {hour: '2-digit', minute: '2-digit'});
     document.getElementById('last-updated-time').textContent = time;
 }
 updateTimestamp();
+setInterval(updateTimestamp, 60000);
 
+// ── Alerte necitite ───────────────────────────────────────────
 async function loadUnreadAlerts() {
     try {
         const resp  = await fetch('/api/alerts?unread_only=true');
@@ -109,13 +138,12 @@ async function loadUnreadAlerts() {
             bellBadge.style.display     = 'none';
             navAlertCount.style.display = 'none';
         }
-    } catch (e) {
-        console.error('Nu am putut încărca alertele:', e);
-    }
+    } catch (e) {}
 }
 loadUnreadAlerts();
+setInterval(loadUnreadAlerts, 30000);
 
-// Dark/Light mode toggle
+// ── Dark/Light mode ───────────────────────────────────────────
 function toggleTheme() {
     const body = document.body;
     const icon = document.getElementById('theme-icon');
@@ -128,16 +156,34 @@ function toggleTheme() {
         localStorage.setItem('theme', 'dark');
     }
 }
-
-// Aplică tema salvată la încărcare
 const savedTheme = localStorage.getItem('theme');
 if (savedTheme === 'light') {
     document.body.classList.add('light-mode');
     document.getElementById('theme-icon').className = 'bi bi-moon-fill';
 }
 
-setInterval(loadUnreadAlerts, 30000);
-setInterval(updateTimestamp, 60000);
+// ── User curent in header ─────────────────────────────────────
+async function loadCurrentUser() {
+    try {
+        const resp = await fetch('/api/auth/me');
+        const data = await resp.json();
+        if (data.authenticated) {
+            document.getElementById('username-text').textContent = data.user.username;
+            const pill = document.getElementById('role-pill');
+            pill.textContent  = data.user.role;
+            pill.className    = 'role-pill role-' + data.user.role;
+        }
+    } catch (e) {}
+}
+loadCurrentUser();
+
+// ── Logout ────────────────────────────────────────────────────
+async function doLogout() {
+    try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+    } catch(e) {}
+    window.location.href = '/login';
+}
 </script>
 
 {% block scripts %}{% endblock %}
