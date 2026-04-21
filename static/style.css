@@ -30,29 +30,126 @@
     --radius-sm:  6px;
 }
 
-/* ── Tema Light ──────────────────────────────────────────────── */
+/* ── Tema Light ── */
 body.light-mode {
     --bg-dark:      #f1f5f9;
     --bg-card:      #ffffff;
     --bg-sidebar:   #1e293b;
     --bg-hover:     #e2e8f0;
-    --border:       #e2e8f0;
+    --border:       #cbd5e1;
     --text-primary: #1e293b;
     --text-muted:   #64748b;
 }
 
-/* Fix culori light mode */
-body.light-mode .diip-table { color: #1e293b; }
-body.light-mode .stat-value { color: #1e293b; }
-body.light-mode .chart-card { background: #ffffff; }
-body.light-mode .table-card { background: #ffffff; }
-body.light-mode .detail-card { background: #ffffff; }
-body.light-mode code { color: #0891b2; }
-body.light-mode .ip-code { color: #0891b2; background: rgba(8,145,178,0.08); }
-body.light-mode .top-header { background: #f1f5f9; }
-body.light-mode .diip-table thead th { background: #e2e8f0; color: #475569; }
-body.light-mode .diip-table tbody tr:hover { background: rgba(0,0,0,0.03); }
+/* Fix sidebar in light mode — ramane dark */
+body.light-mode .sidebar {
+    background: #1e293b;
+    border-right-color: #334155;
+}
 
+body.light-mode .sidebar .nav-item {
+    color: #94a3b8;
+}
+
+body.light-mode .sidebar .nav-item:hover {
+    background: #334155;
+    color: #f1f5f9;
+}
+
+body.light-mode .sidebar .nav-item.active {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+body.light-mode .brand-name {
+    color: #f1f5f9;
+}
+
+body.light-mode .brand-sub {
+    color: #94a3b8;
+}
+
+body.light-mode .sidebar-footer .status-text,
+body.light-mode .sidebar-footer .app-version,
+body.light-mode .db-status {
+    color: #94a3b8;
+}
+
+/* Fix header in light mode */
+body.light-mode .top-header {
+    background:   #f1f5f9;
+    border-bottom-color: #cbd5e1;
+}
+
+body.light-mode .page-title h1 {
+    color: #1e293b;
+}
+
+/* Fix tabele in light mode */
+body.light-mode .diip-table {
+    color: #1e293b;
+}
+
+body.light-mode .diip-table thead th {
+    background: #e2e8f0;
+    color:      #475569;
+    border-bottom-color: #cbd5e1;
+}
+
+body.light-mode .diip-table tbody td {
+    border-bottom-color: #e2e8f0;
+    color: #1e293b;
+}
+
+body.light-mode .diip-table tbody tr:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* Fix carduri in light mode */
+body.light-mode .stat-card,
+body.light-mode .chart-card,
+body.light-mode .table-card,
+body.light-mode .detail-card {
+    background:   #ffffff;
+    border-color: #cbd5e1;
+}
+
+body.light-mode .chart-header,
+body.light-mode .table-card-header {
+    border-bottom-color: #e2e8f0;
+}
+
+/* Fix text in light mode */
+body.light-mode .stat-value { color: #1e293b; }
+body.light-mode .chart-header h5,
+body.light-mode .table-card-header h5 { color: #1e293b; }
+
+/* Fix ip code in light mode */
+body.light-mode .ip-code {
+    color:      #0891b2;
+    background: rgba(8, 145, 178, 0.08);
+}
+
+body.light-mode code { color: #0891b2; }
+
+/* Fix filter bar in light mode */
+body.light-mode .search-box {
+    background:   #ffffff;
+    border-color: #cbd5e1;
+}
+
+body.light-mode .search-box input { color: #1e293b; }
+
+body.light-mode .filter-btn {
+    border-color: #cbd5e1;
+    color:        #64748b;
+}
+
+body.light-mode .filter-btn.active {
+    background:   rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    color:        #2563eb;
+}
 
 /* ── theme-toggle button ── */
 .theme-toggle {
@@ -902,4 +999,74 @@ code {
     border-color: var(--accent-red);
     color:        var(--accent-red);
 }
+
+/* ============================================================
+   FIX BOOTSTRAP OVERRIDES — tabele si carduri cu fundal alb
+   ============================================================ */
+
+/* Forteaza fundalul dark pe toate tabelele Bootstrap */
+.table {
+    --bs-table-bg:           transparent;
+    --bs-table-striped-bg:   transparent;
+    --bs-table-hover-bg:     rgba(51, 65, 85, 0.3);
+    --bs-table-border-color: var(--border);
+    color: var(--text-primary);
+}
+
+/* Elimina fundalul alb din celule */
+.table > :not(caption) > * > * {
+    background-color: transparent;
+    color: var(--text-primary);
+    border-bottom-color: var(--border);
+}
+
+/* Header tabel Bootstrap */
+.table thead > tr > th {
+    background-color: var(--bg-dark) !important;
+    color:            var(--text-muted) !important;
+    border-color:     var(--border) !important;
+}
+
+/* Fundal card Bootstrap */
+.card {
+    background: var(--bg-card);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+/* Modal Bootstrap */
+.modal-content {
+    background: var(--bg-card);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+.modal-header,
+.modal-footer {
+    border-color: var(--border);
+}
+
+/* Select si input Bootstrap */
+.form-select,
+.form-control {
+    background-color: var(--bg-dark) !important;
+    border-color:     var(--border) !important;
+    color:            var(--text-primary) !important;
+}
+
+.form-select option {
+    background: var(--bg-card);
+    color:      var(--text-primary);
+}
+
+/* Badge Bootstrap */
+.badge.bg-success { background-color: rgba(34, 197, 94, 0.2)  !important; color: #86efac !important; }
+.badge.bg-danger  { background-color: rgba(239, 68, 68, 0.2)  !important; color: #fca5a5 !important; }
+.badge.bg-warning { background-color: rgba(245, 158, 11, 0.2) !important; color: #fde68a !important; }
+.badge.bg-primary { background-color: rgba(59, 130, 246, 0.2) !important; color: #93c5fd !important; }
+
+
+
+
+
 
