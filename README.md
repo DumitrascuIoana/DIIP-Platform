@@ -1,91 +1,87 @@
 # 🖥️ DIIP — Digital Infrastructure Intelligence Platform
 
-O platformă web enterprise-ready pentru descoperirea, inventarierea și monitorizarea automată a infrastructurii IT dintr-o rețea.
+O platformă web **enterprise-ready** pentru descoperirea, inventarierea și monitorizarea automată a infrastructurii IT dintr-o rețea.
 
-Proiect personal dezvoltat pentru a demonstra competențe în networking, baze de date SQL avansate, backend Python și monitorizare sisteme. Inspirat din Nagios — am construit o versiune mai simplă și mai intuitivă.
+> Proiect personal dezvoltat pentru a demonstra competențe în **networking**, **baze de date SQL avansate**, **backend Python** și **monitorizare sisteme**. Inspirat din Nagios — am construit o versiune mai simplă și mai intuitivă.
+
 ---
 
 ## 📸 Screenshots
 
-### Dashboard — Privire de ansamblu
-<img width="1918" height="907" alt="image" src="https://github.com/user-attachments/assets/59931b16-0897-4c4d-9301-0610a2f80846" />
+### 🔐 Login — Autentificare securizată
+![Login](screenshots/login.png)
 
+### Dashboard — Privire de ansamblu
+![Dashboard](screenshots/dashboard.png)
 
 ### Inventar IT — Toate device-urile din rețea
-<img width="1919" height="900" alt="image" src="https://github.com/user-attachments/assets/8bee0ae4-c487-4ffb-8d97-d218f190190f" />
-
+![Inventar](screenshots/inventory.png)
 
 ### Scanare Rețea — Descoperire automată
-<img width="1915" height="897" alt="image" src="https://github.com/user-attachments/assets/b052d778-ed36-4566-8d7f-2a6293a17071" />
-
+![Scanare](screenshots/scan.png)
 
 ### Alerte — Monitorizare evenimente
-<img width="1918" height="907" alt="image" src="https://github.com/user-attachments/assets/1162c765-b723-463c-80a7-b3f4ab88604a" />
+![Alerte](screenshots/alerts.png)
 
+### Audit Logs — Istoricul acțiunilor
+![Audit](screenshots/audit.png)
 
-### Audit Logs  — Istoricul acțiunilor
-<img width="1915" height="904" alt="image" src="https://github.com/user-attachments/assets/e38dd8fc-e594-4228-bf83-64865dd1966c" />
+### Analytics — CTE și Window Functions
+![Analytics](screenshots/analytics.png)
 
-
-
-### Analitycs  — CTE și Window Functions
-<img width="1918" height="900" alt="image" src="https://github.com/user-attachments/assets/cfe75955-4d16-4c5d-bc5e-aa1ee382e3ed" />
-
-----
+---
 
 ## ✨ Funcționalități
 
-**Autentificare & Securitate**
+### 🔐 Autentificare & Securitate
+- Login/logout cu sesiuni securizate (cookie httpOnly)
+- Roluri: **admin** (acces complet) și **viewer** (doar vizualizare)
+- Parole hash-uite cu **bcrypt** — niciodată stocate în text clar
+- **Audit Logs** — fiecare acțiune înregistrată în SQL Server
 
-Login/logout cu sesiuni securizate (cookie httpOnly)
-Roluri: admin (acces complet) și viewer (doar vizualizare)
-Parole hash-uite cu bcrypt — niciodată stocate în text clar
-Audit Logs — fiecare acțiune înregistrată în SQL Server
+### 🔍 Network Discovery
+- Scanează automat un range de IP-uri cu **Nmap**
+- Detectează hosturi active, sistem de operare și porturi deschise
+- Identificare automată tip device (Server/Laptop/Router/Printer)
 
-**🔍 Network Discovery**
+### 📦 Inventar IT
+- Bază de date completă cu toate device-urile din rețea
+- Câmpuri editabile: owner, departament, note
+- Filtrare după status, tip, departament
+- Export **Excel** (colorat) și **CSV**
 
-Scanează automat un range de IP-uri cu Nmap
-Detectează hosturi active, sistem de operare și porturi deschise
-Identificare automată tip device (Server/Laptop/Router/Printer)
+### 📊 Analytics Dashboard
+- Query-uri SQL avansate: **CTE**, **Window Functions**
+- **RANK()**, **NTILE()**, **LAG()**, **OVER()** — funcții de analiză
+- Grafice: activitate zilnică, distribuție OS, uptime ranking
+- Evoluție cumulativă a infrastructurii în timp
 
-**📦 Inventar IT**
+### ⚠️ Alerting & Monitoring
+- Monitor automat — verificare device-uri la fiecare 5 minute
+- Alerte automate pe **email** (Gmail SMTP) când un server cade
+- Dashboard cu alerte recente și device-uri offline
+- Istoric uptime per device cu grafic de 24h
 
-Bază de date completă cu toate device-urile din rețea
-Câmpuri editabile: owner, departament, note
-Filtrare după status, tip, departament
-Export Excel (colorat) și CSV
+### 📜 Audit Logs
+- Înregistrare completă: login, logout, scanări, editări, exporturi
+- Filtrare după user, tip acțiune, status
+- Statistici: total acțiuni, login-uri reușite/eșuate
 
-**📊 Analytics Dashboard**
-
-Query-uri SQL avansate: CTE, Window Functions
-RANK(), NTILE(), LAG(), OVER() — funcții de analiză
-Grafice: activitate zilnică, distribuție OS, uptime ranking
-Evoluție cumulativă a infrastructurii în timp
-
-**⚠️ Alerting & Monitoring**
-
-Monitor automat — verificare device-uri la fiecare 5 minute
-Alerte automate pe email (Gmail SMTP) când un server cade
-Dashboard cu alerte recente și device-uri offline
-Istoric uptime per device cu grafic de 24h
-
-**📜 Audit Logs**
-
-Înregistrare completă: login, logout, scanări, editări, exporturi
-Filtrare după user, tip acțiune, status
-Statistici: total acțiuni, login-uri reușite/eșuate
 ---
 
 ## 🛠️ Tech Stack
 
 | Componentă | Tehnologie |
 |---|---|
-| Backend | Python, FastAPI |
+| Backend | Python 3.11, FastAPI |
 | Bază de date | Microsoft SQL Server (SSMS) |
 | Network scanning | Nmap, python-nmap |
+| Autentificare | bcrypt, sessions, cookies |
 | Frontend | HTML, Bootstrap 5, Chart.js |
 | Template engine | Jinja2 |
-| Server | Uvicorn |
+| Server | Uvicorn (async) |
+| Email | SMTP Gmail |
+| Export | openpyxl (Excel), csv |
 | Versionare | Git, GitHub |
 
 ---
@@ -95,25 +91,55 @@ Statistici: total acțiuni, login-uri reușite/eșuate
 ```
 DIIP-Platform/
 ├── database/
-│   ├── 1_create_tables.sql    # Schema bazei de date
-│   ├── 2_create_indexes.sql   # Indexuri pentru performanță
-│   └── 3_seed_data.sql        # Date de test
+│   ├── 1_create_tables.sql      # Schema principală
+│   ├── 2_create_indexes.sql     # Indexuri pentru performanță
+│   ├── 3_seed_data.sql          # Date demo
+│   ├── 4_auth_schema.sql        # Tabele autentificare
+│   └── 5_analytics_queries.sql  # Query-uri CTE + Window Functions
 ├── templates/
-│   ├── base.html              # Template de bază (sidebar, header)
-│   ├── dashboard.html         # Pagina principală cu grafice
-│   ├── inventory.html         # Inventar device-uri
-│   ├── scan.html              # Scanare rețea
-│   └── alerts.html            # Alerte și notificări
+│   ├── base.html                # Template de bază (sidebar, header)
+│   ├── login.html               # Pagina de autentificare
+│   ├── dashboard.html           # Dashboard principal
+│   ├── inventory.html           # Inventar device-uri
+│   ├── scan.html                # Scanare rețea
+│   ├── alerts.html              # Alerte și notificări
+│   ├── audit.html               # Audit logs
+│   ├── analytics.html           # Analytics avansat
+│   └── device_detail.html       # Detalii device + uptime
 ├── static/
-│   └── style.css              # Stiluri CSS (tema dark)
-├── screenshots/               # Screenshot-uri aplicație
-├── main.py                    # Aplicația FastAPI + toate rutele
-├── database.py                # Conexiunea și operațiile SQL Server
-├── scanner.py                 # Network scanner cu Nmap
-├── monitor.py                 # Monitor automat de alerte
-├── requirements.txt           # Dependențe Python
-└── .env.example               # Template configurare
+│   └── style.css                # Dark/Light mode theme
+├── screenshots/                 # Screenshots aplicație
+├── main.py                      # FastAPI app + toate rutele
+├── database.py                  # Conexiunea SQL Server
+├── auth.py                      # Autentificare + audit logging
+├── scanner.py                   # Network scanner Nmap
+├── monitor.py                   # Monitor automat alerte
+├── email_service.py             # Email alerts SMTP
+├── requirements.txt             # Dependențe Python
+└── .env.example                 # Template configurare
 ```
+
+---
+
+## 🗃️ Schema bazei de date
+
+```
+devices       → device-uri descoperite (IP, OS, owner, status)
+scan_history  → istoricul scanărilor efectuate
+alerts        → alerte generate de monitor
+uptime_log    → disponibilitate per device (grafic 24h)
+users         → utilizatori platformă (bcrypt passwords)
+sessions      → sesiuni active (token-uri)
+audit_logs    → jurnal complet al acțiunilor
+```
+
+**Query-uri avansate folosite:**
+- `CTE (WITH)` — subquery-uri reutilizabile pentru analytics
+- `RANK() OVER` — clasament device-uri după uptime
+- `NTILE(4) OVER` — împărțire în quartile
+- `LAG() OVER` — comparație cu ziua anterioară
+- `SUM() OVER()` — running total cumulativ
+- `WINDOW FUNCTIONS` cu `PARTITION BY`
 
 ---
 
@@ -133,7 +159,7 @@ git clone https://github.com/DumitrascuIoana/DIIP-Platform.git
 cd DIIP-Platform
 ```
 
-### Pasul 2: Instalează dependențele Python
+### Pasul 2: Instalează dependențele
 
 ```bash
 pip install -r requirements.txt
@@ -141,21 +167,25 @@ pip install -r requirements.txt
 
 ### Pasul 3: Configurează baza de date
 
-Deschide **SSMS** și rulează fișierele SQL în ordine:
+Deschide **SSMS** și rulează în ordine:
 ```
-1. database/1_create_tables.sql   ← creează tabelele
-2. database/2_create_indexes.sql  ← adaugă indexurile
-3. database/3_seed_data.sql       ← inserează date demo
+1. database/1_create_tables.sql
+2. database/2_create_indexes.sql
+3. database/3_seed_data.sql
+4. database/4_auth_schema.sql
 ```
 
-### Pasul 4: Configurează conexiunea
+### Pasul 4: Configurează `.env`
 
-Creează fișierul `.env` în folderul proiectului:
 ```env
-DB_SERVER=localhost\SQLEXPRESS
+DB_SERVER=localhost
 DB_NAME=DIIP
 DB_TRUSTED_CONNECTION=Yes
 DB_DRIVER=ODBC Driver 17 for SQL Server
+EMAIL_SENDER=emailul_tau@gmail.com
+EMAIL_PASSWORD=app_password_gmail
+EMAIL_RECEIVER=emailul_tau@gmail.com
+EMAIL_ENABLED=True
 ```
 
 ### Pasul 5: Pornește aplicația
@@ -164,18 +194,14 @@ DB_DRIVER=ODBC Driver 17 for SQL Server
 python -m uvicorn main:app --reload --port 8080
 ```
 
-Deschide browserul la: **http://127.0.0.1:8080** 🎉
+Deschide: **http://127.0.0.1:8080**
 
----
+### Conturi demo
 
-## 📊 Schema bazei de date
-
-```
-devices       → toate device-urile descoperite în rețea
-scan_history  → istoricul scanărilor efectuate
-alerts        → alertele generate de monitor
-uptime_log    → istoricul de disponibilitate per device
-```
+| Username | Parolă | Rol |
+|----------|--------|-----|
+| admin | Admin1234! | Administrator |
+| viewer | Admin1234! | Viewer |
 
 ---
 
@@ -183,20 +209,23 @@ uptime_log    → istoricul de disponibilitate per device
 
 | Method | Endpoint | Descriere |
 |--------|----------|-----------|
-| GET | `/api/dashboard/stats` | Statistici pentru dashboard |
-| GET | `/api/devices` | Lista tuturor device-urilor |
-| PUT | `/api/devices/{id}` | Actualizează info device |
-| POST | `/api/scan` | Pornește o scanare nouă |
-| GET | `/api/scan/history` | Istoricul scanărilor |
-| GET | `/api/alerts` | Lista alertelor |
-| PUT | `/api/alerts/{id}/read` | Marchează alertă citită |
-| GET | `/api/health` | Status aplicație |
+| POST | `/api/auth/login` | Autentificare |
+| POST | `/api/auth/logout` | Deconectare |
+| GET | `/api/dashboard/stats` | Statistici dashboard |
+| GET | `/api/devices` | Lista device-uri |
+| PUT | `/api/devices/{id}` | Actualizează device |
+| POST | `/api/scan` | Pornește scanare |
+| GET | `/api/alerts` | Lista alerte |
+| GET | `/api/audit/logs` | Audit logs |
+| GET | `/api/analytics/kpi` | KPI-uri analytics |
+| GET | `/api/export/excel` | Export Excel |
+| GET | `/api/export/csv` | Export CSV |
 
 ---
 
 ## 👩‍💻 Autor
 
-**Ioana Dumitrascu**
+**Ionut Dumitrascu**
 - GitHub: [@DumitrascuIoana](https://github.com/DumitrascuIoana)
 
 ---
