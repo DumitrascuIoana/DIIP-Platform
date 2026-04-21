@@ -9,22 +9,32 @@ O platformă web pentru descoperirea, inventarierea și monitorizarea automată 
 ## 📸 Screenshots
 
 ### Dashboard — Privire de ansamblu
-<img width="1916" height="984" alt="image" src="https://github.com/user-attachments/assets/aeb35c62-eb9a-4a6d-af50-16c46a6f1f20" />
+<img width="1918" height="907" alt="image" src="https://github.com/user-attachments/assets/59931b16-0897-4c4d-9301-0610a2f80846" />
+
 
 
 ### Inventar IT — Toate device-urile din rețea
-<img width="1917" height="973" alt="image" src="https://github.com/user-attachments/assets/532537c3-e9cd-4199-9f79-c082cd542d3e" />
+<img width="1919" height="900" alt="image" src="https://github.com/user-attachments/assets/8bee0ae4-c487-4ffb-8d97-d218f190190f" />
 
 
 
 ### Scanare Rețea — Descoperire automată
-<img width="1912" height="977" alt="image" src="https://github.com/user-attachments/assets/284941e7-3323-4622-997a-487acdd51fc6" />
+<img width="1915" height="897" alt="image" src="https://github.com/user-attachments/assets/b052d778-ed36-4566-8d7f-2a6293a17071" />
+
 
 
 
 ### Alerte — Monitorizare evenimente
-<img width="1915" height="975" alt="image" src="https://github.com/user-attachments/assets/df79b6f2-fce9-4e08-9159-d11918481242" />
+<img width="1918" height="907" alt="image" src="https://github.com/user-attachments/assets/1162c765-b723-463c-80a7-b3f4ab88604a" />
 
+
+### Audit Logs  — Istoricul acțiunilor
+<img width="1915" height="904" alt="image" src="https://github.com/user-attachments/assets/e38dd8fc-e594-4228-bf83-64865dd1966c" />
+
+
+
+### Analitycs  — CTE și Window Functions
+<img width="1918" height="900" alt="image" src="https://github.com/user-attachments/assets/cfe75955-4d16-4c5d-bc5e-aa1ee382e3ed" />
 
 
 ---
