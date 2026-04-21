@@ -9,25 +9,32 @@ O platformă web **enterprise-ready** pentru descoperirea, inventarierea și mon
 ## 📸 Screenshots
 
 ### 🔐 Login — Autentificare securizată
-![Login](screenshots/login.png)
+<img width="509" height="537" alt="image" src="https://github.com/user-attachments/assets/8d14cd59-50ad-4de1-95e6-1a3f1f80cb4c" />
+
 
 ### Dashboard — Privire de ansamblu
-![Dashboard](screenshots/dashboard.png)
+<img width="1918" height="905" alt="image" src="https://github.com/user-attachments/assets/a68ec705-66ef-4a3f-8664-4926ad1274dd" />
+
 
 ### Inventar IT — Toate device-urile din rețea
-![Inventar](screenshots/inventory.png)
+<img width="1918" height="906" alt="image" src="https://github.com/user-attachments/assets/98d3775e-c260-4417-8cf0-d748d819d39d" />
+
 
 ### Scanare Rețea — Descoperire automată
-![Scanare](screenshots/scan.png)
+<img width="1916" height="895" alt="image" src="https://github.com/user-attachments/assets/6e14be41-453c-458a-9ad1-a73bcdeba1f3" />
+
 
 ### Alerte — Monitorizare evenimente
-![Alerte](screenshots/alerts.png)
+<img width="1917" height="902" alt="image" src="https://github.com/user-attachments/assets/ac358c00-a6f2-4d13-b803-16f60401c295" />
+
 
 ### Audit Logs — Istoricul acțiunilor
-![Audit](screenshots/audit.png)
+<img width="1917" height="901" alt="image" src="https://github.com/user-attachments/assets/36bb2365-a158-447a-b076-f8cb3add71cc" />
+
 
 ### Analytics — CTE și Window Functions
-![Analytics](screenshots/analytics.png)
+<img width="1917" height="905" alt="image" src="https://github.com/user-attachments/assets/23251417-f00d-46b5-8ee6-bf6e641c256c" />
+
 
 ---
 
