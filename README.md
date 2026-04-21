@@ -232,7 +232,7 @@ Deschide: **http://127.0.0.1:8080**
 
 ## 👩‍💻 Autor
 
-**Ionut Dumitrascu**
+**Ioana Dumitrascu**
 - GitHub: [@DumitrascuIoana](https://github.com/DumitrascuIoana)
 
 ---
