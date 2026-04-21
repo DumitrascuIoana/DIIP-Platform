@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Logs{% endblock %}
+{% block page_title %}Audit Logs{% endblock %}
+{% block page_subtitle %}Istoricul complet al acțiunilor din platformă{% endblock %}
+
+{% block content %}
+
+<!-- Filtre -->
+<div class="filter-bar mb-4">
+    <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" id="search-username" placeholder="Caută după username..."
+               oninput="filterLogs()">
+    </div>
+    <div class="filter-buttons">
+        <button class="filter-btn active" onclick="setFilter('all', this)">Toate</button>
+        <button class="filter-btn" onclick="setFilter('LOGIN', this)">
+            <i class="bi bi-box-arrow-in-right"></i> Login
+        </button>
+        <button class="filter-btn" onclick="setFilter('LOGIN_FAILED', this)">
+            <i class="bi bi-x-circle text-danger"></i> Eșuate
+        </button>
+        <button class="filter-btn" onclick="setFilter('SCAN_START', this)">
+            <i class="bi bi-radar"></i> Scanări
+        </button>
+        <button class="filter-btn" onclick="setFilter('DEVICE_EDIT', this)">
+            <i class="bi bi-pencil"></i> Editări
+        </button>
+        <button class="filter-btn" onclick="setFilter('EXPORT_EXCEL', this)">
+            <i class="bi bi-file-earmark-excel"></i> Export
+        </button>
+        <button class="filter-btn" onclick="setFilter('LOGOUT', this)">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+    </div>
+    <div class="ms-auto">
+        <button class="btn btn-sm btn-outline-secondary" onclick="loadLogs()">
+            <i class="bi bi-arrow-clockwise me-1"></i> Reîncarcă
+        </button>
+    </div>
+</div>
+
+<!-- Statistici rapide -->
+<div class="row g-3 mb-4" id="stats-row">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon icon-blue">
+                <i class="bi bi-list-check"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value" id="stat-total">--</div>
+                <div class="stat-label">Total Acțiuni</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon icon-green">
+                <i class="bi bi-box-arrow-in-right"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value text-success" id="stat-logins">--</div>
+                <div class="stat-label">Login-uri Reușite</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon icon-red">
+                <i class="bi bi-x-circle"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value text-danger" id="stat-failed">--</div>
+                <div class="stat-label">Login-uri Eșuate</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon icon-yellow">
+                <i class="bi bi-radar"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value text-warning" id="stat-scans">--</div>
+                <div class="stat-label">Scanări</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabel logs -->
+<div class="table-card">
+    <div class="table-card-header">
+        <h5><i class="bi bi-journal-text me-2"></i>Jurnal Activitate</h5>
+        <span class="devices-count" id="logs-count">-- înregistrări</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table diip-table" id="logs-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Acțiune</th>
+                    <th>Entitate</th>
+                    <th>Detalii</th>
+                    <th>IP</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="logs-tbody">
+                <tr>
+                    <td colspan="7" class="text-center py-4">
+                        <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                        Se încarcă...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+let allLogs      = [];
+let activeFilter = 'all';
+
+// ── Configurare icoane și culori per acțiune ──────────────────
+const actionConfig = {
+    'LOGIN':         { icon: 'bi-box-arrow-in-right', color: 'text-success', label: 'Login' },
+    'LOGIN_FAILED':  { icon: 'bi-x-circle-fill',      color: 'text-danger',  label: 'Login Eșuat' },
+    'LOGOUT':        { icon: 'bi-box-arrow-right',     color: 'text-muted',   label: 'Logout' },
+    'SCAN_START':    { icon: 'bi-radar',               color: 'text-info',    label: 'Scanare' },
+    'DEVICE_EDIT':   { icon: 'bi-pencil-square',       color: 'text-warning', label: 'Editare Device' },
+    'EXPORT_EXCEL':  { icon: 'bi-file-earmark-excel',  color: 'text-success', label: 'Export Excel' },
+    'EXPORT_CSV':    { icon: 'bi-file-earmark-text',   color: 'text-muted',   label: 'Export CSV' },
+    'VIEW_DEVICE':   { icon: 'bi-eye',                 color: 'text-primary', label: 'Vizualizare' },
+};
+
+// ── Incarca logurile din API ──────────────────────────────────
+async function loadLogs() {
+    try {
+        const resp = await fetch('/api/audit/logs');
+        const data = await resp.json();
+        allLogs    = data.logs || [];
+
+        // Calculeaza statistici
+        document.getElementById('stat-total').textContent  = allLogs.length;
+        document.getElementById('stat-logins').textContent = allLogs.filter(l => l.action === 'LOGIN').length;
+        document.getElementById('stat-failed').textContent = allLogs.filter(l => l.action === 'LOGIN_FAILED').length;
+        document.getElementById('stat-scans').textContent  = allLogs.filter(l => l.action === 'SCAN_START').length;
+
+        filterLogs();
+    } catch (e) {
+        console.error('Eroare la incarcare logs:', e);
+    }
+}
+
+// ── Filtreaza logurile ────────────────────────────────────────
+function setFilter(filter, btn) {
+    activeFilter = filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterLogs();
+}
+
+function filterLogs() {
+    const search = document.getElementById('search-username').value.toLowerCase();
+
+    let filtered = allLogs.filter(log => {
+        const matchFilter = activeFilter === 'all' || log.action === activeFilter;
+        const matchSearch = !search ||
+            (log.username || '').toLowerCase().includes(search) ||
+            (log.details  || '').toLowerCase().includes(search);
+        return matchFilter && matchSearch;
+    });
+
+    renderLogs(filtered);
+}
+
+// ── Randeaza tabelul ──────────────────────────────────────────
+function renderLogs(logs) {
+    const tbody = document.getElementById('logs-tbody');
+    document.getElementById('logs-count').textContent = `${logs.length} înregistrări`;
+
+    if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Nicio înregistrare găsită.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = logs.map(log => {
+        const cfg    = actionConfig[log.action] || { icon: 'bi-circle', color: 'text-muted', label: log.action };
+        const status = log.status === 'success'
+            ? '<span class="badge bg-success bg-opacity-25 text-success">success</span>'
+            : log.status === 'failed'
+            ? '<span class="badge bg-danger bg-opacity-25 text-danger">failed</span>'
+            : '<span class="badge bg-warning bg-opacity-25 text-warning">' + log.status + '</span>';
+
+        return `
+            <tr>
+                <td>
+                    <small class="text-muted" style="font-family: var(--font-mono); font-size:0.75rem">
+                        ${log.created_at || '—'}
+                    </small>
+                </td>
+                <td>
+                    <span style="font-weight:500">${log.username || '<span class="text-muted">anonim</span>'}</span>
+                </td>
+                <td>
+                    <span class="${cfg.color}">
+                        <i class="bi ${cfg.icon} me-1"></i>${cfg.label}
+                    </span>
+                </td>
+                <td>
+                    <small class="text-muted">
+                        ${log.entity_type ? log.entity_type + (log.entity_id ? ' #' + log.entity_id : '') : '—'}
+                    </small>
+                </td>
+                <td>
+                    <small style="color: var(--text-muted); font-size:0.8rem">
+                        ${log.details || '—'}
+                    </small>
+                </td>
+                <td>
+                    <code style="font-size:0.75rem">${log.ip_address || '—'}</code>
+                </td>
+                <td>${status}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Pornire
+loadLogs();
+setInterval(loadLogs, 30000);
+</script>
+{% endblock %}
