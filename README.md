@@ -1,9 +1,8 @@
 # 🖥️ DIIP — Digital Infrastructure Intelligence Platform
 
-O platformă web pentru descoperirea, inventarierea și monitorizarea automată a infrastructurii IT dintr-o rețea.
+O platformă web enterprise-ready pentru descoperirea, inventarierea și monitorizarea automată a infrastructurii IT dintr-o rețea.
 
-> Proiect personal dezvoltat pentru a demonstra competențe în **networking**, **baze de date**, **backend Python** și **monitorizare sisteme**.
-
+Proiect personal dezvoltat pentru a demonstra competențe în networking, baze de date SQL avansate, backend Python și monitorizare sisteme. Inspirat din Nagios — am construit o versiune mai simplă și mai intuitivă.
 ---
 
 ## 📸 Screenshots
@@ -12,16 +11,12 @@ O platformă web pentru descoperirea, inventarierea și monitorizarea automată 
 <img width="1918" height="907" alt="image" src="https://github.com/user-attachments/assets/59931b16-0897-4c4d-9301-0610a2f80846" />
 
 
-
 ### Inventar IT — Toate device-urile din rețea
 <img width="1919" height="900" alt="image" src="https://github.com/user-attachments/assets/8bee0ae4-c487-4ffb-8d97-d218f190190f" />
 
 
-
 ### Scanare Rețea — Descoperire automată
 <img width="1915" height="897" alt="image" src="https://github.com/user-attachments/assets/b052d778-ed36-4566-8d7f-2a6293a17071" />
-
-
 
 
 ### Alerte — Monitorizare evenimente
@@ -36,18 +31,49 @@ O platformă web pentru descoperirea, inventarierea și monitorizarea automată 
 ### Analitycs  — CTE și Window Functions
 <img width="1918" height="900" alt="image" src="https://github.com/user-attachments/assets/cfe75955-4d16-4c5d-bc5e-aa1ee382e3ed" />
 
-
----
+----
 
 ## ✨ Funcționalități
 
-- 🔍 **Network Scanner** — scanează automat un range de IP-uri și detectează hosturi active
-- 🖥️ **Identificare device-uri** — detectează tipul (Server/Laptop/Router), OS și porturi deschise
-- 📦 **Inventar IT** — bază de date completă cu toate device-urile din rețea
-- 📊 **Dashboard** — grafice în timp real (tip device, OS distribution, status rețea)
-- ⚠️ **Alerting automat** — notificări când un server iese offline
-- 🔄 **Monitorizare continuă** — verificare automată la fiecare 5 minute
+**Autentificare & Securitate**
 
+Login/logout cu sesiuni securizate (cookie httpOnly)
+Roluri: admin (acces complet) și viewer (doar vizualizare)
+Parole hash-uite cu bcrypt — niciodată stocate în text clar
+Audit Logs — fiecare acțiune înregistrată în SQL Server
+
+**🔍 Network Discovery**
+
+Scanează automat un range de IP-uri cu Nmap
+Detectează hosturi active, sistem de operare și porturi deschise
+Identificare automată tip device (Server/Laptop/Router/Printer)
+
+**📦 Inventar IT**
+
+Bază de date completă cu toate device-urile din rețea
+Câmpuri editabile: owner, departament, note
+Filtrare după status, tip, departament
+Export Excel (colorat) și CSV
+
+**📊 Analytics Dashboard**
+
+Query-uri SQL avansate: CTE, Window Functions
+RANK(), NTILE(), LAG(), OVER() — funcții de analiză
+Grafice: activitate zilnică, distribuție OS, uptime ranking
+Evoluție cumulativă a infrastructurii în timp
+
+**⚠️ Alerting & Monitoring**
+
+Monitor automat — verificare device-uri la fiecare 5 minute
+Alerte automate pe email (Gmail SMTP) când un server cade
+Dashboard cu alerte recente și device-uri offline
+Istoric uptime per device cu grafic de 24h
+
+**📜 Audit Logs**
+
+Înregistrare completă: login, logout, scanări, editări, exporturi
+Filtrare după user, tip acțiune, status
+Statistici: total acțiuni, login-uri reușite/eșuate
 ---
 
 ## 🛠️ Tech Stack
@@ -170,7 +196,7 @@ uptime_log    → istoricul de disponibilitate per device
 
 ## 👩‍💻 Autor
 
-**Ionut Dumitrascu**
+**Ioana Dumitrascu**
 - GitHub: [@DumitrascuIoana](https://github.com/DumitrascuIoana)
 
 ---
