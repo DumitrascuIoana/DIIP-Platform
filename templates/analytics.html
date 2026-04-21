@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics{% endblock %}
+{% block page_title %}Analytics Dashboard{% endblock %}
+{% block page_subtitle %}Analiză avansată cu CTE și Window Functions{% endblock %}
+
+{% block content %}
+
+<!-- Filtre perioada -->
+<div class="filter-bar mb-4">
+    <div class="filter-buttons">
+        <button class="filter-btn active" onclick="setPeriod(7,  this)">7 zile</button>
+        <button class="filter-btn"        onclick="setPeriod(30, this)">30 zile</button>
+        <button class="filter-btn"        onclick="setPeriod(90, this)">90 zile</button>
+    </div>
+    <div class="ms-auto">
+        <button class="btn btn-sm btn-outline-secondary" onclick="loadAll()">
+            <i class="bi bi-arrow-clockwise me-1"></i> Reîncarcă
+        </button>
+    </div>
+</div>
+
+<!-- Rândul 1: KPI Cards -->
+<div class="row g-4 mb-4" id="kpi-row">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon icon-blue">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value" id="kpi-uptime">--</div>
+                <div class="stat-label">Uptime Mediu Rețea</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon icon-green">
+                <i class="bi bi-hdd-network"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value text-success" id="kpi-devices">--</div>
+                <div class="stat-label">Device-uri Monitorizate</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon icon-yellow">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value text-warning" id="kpi-alerts">--</div>
+                <div class="stat-label">Alerte Generate</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon icon-red">
+                <i class="bi bi-radar"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value text-info" id="kpi-scans">--</div>
+                <div class="stat-label">Scanări Efectuate</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rândul 2: Grafice principale -->
+<div class="row g-4 mb-4">
+
+    <!-- Activitate zilnică -->
+    <div class="col-xl-8">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h5>
+                    <i class="bi bi-bar-chart-line me-2"></i>
+                    Activitate Zilnică
+                    <span class="badge bg-primary bg-opacity-25 text-primary ms-2" style="font-size:0.7rem">
+                        LAG() Window Function
+                    </span>
+                </h5>
+            </div>
+            <div style="padding: 1.5rem; height: 280px;">
+                <canvas id="chartActivity"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Distributie departamente -->
+    <div class="col-xl-4">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h5>
+                    <i class="bi bi-building me-2"></i>
+                    Device-uri pe Departament
+                    <span class="badge bg-success bg-opacity-25 text-success ms-2" style="font-size:0.7rem">
+                        OVER()
+                    </span>
+                </h5>
+            </div>
+            <div style="padding: 1.5rem; height: 280px;">
+                <canvas id="chartDept"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Rândul 3: Top Uptime + Alerte -->
+<div class="row g-4 mb-4">
+
+    <!-- Top device-uri uptime -->
+    <div class="col-xl-7">
+        <div class="table-card">
+            <div class="table-card-header">
+                <h5>
+                    <i class="bi bi-trophy me-2 text-warning"></i>
+                    Top Device-uri după Uptime
+                    <span class="badge bg-warning bg-opacity-25 text-warning ms-2" style="font-size:0.7rem">
+                        RANK() + NTILE()
+                    </span>
+                </h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table diip-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>IP Address</th>
+                            <th>Tip</th>
+                            <th>Uptime %</th>
+                            <th>Verificări</th>
+                            <th>Răspuns Mediu</th>
+                            <th>Quartilă</th>
+                        </tr>
+                    </thead>
+                    <tbody id="uptime-tbody">
+                        <tr><td colspan="7" class="text-center py-3">
+                            <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                            Se încarcă...
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analiza alerte -->
+    <div class="col-xl-5">
+        <div class="table-card">
+            <div class="table-card-header">
+                <h5>
+                    <i class="bi bi-bell me-2"></i>
+                    Analiză Alerte
+                    <span class="badge bg-danger bg-opacity-25 text-danger ms-2" style="font-size:0.7rem">
+                        PIVOT logic
+                    </span>
+                </h5>
+            </div>
+            <div id="alerts-analysis" class="p-3">
+                <div class="text-center py-3">
+                    <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                    Se încarcă...
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Rândul 4: Evolutie device-uri -->
+<div class="row g-4">
+    <div class="col-12">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h5>
+                    <i class="bi bi-graph-up me-2"></i>
+                    Evoluția Infrastructurii în Timp
+                    <span class="badge bg-info bg-opacity-25 text-info ms-2" style="font-size:0.7rem">
+                        Running Total Cumulativ
+                    </span>
+                </h5>
+            </div>
+            <div style="padding: 1.5rem; height: 220px;">
+                <canvas id="chartEvolution"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+let currentPeriod = 7;
+let chartActivity  = null;
+let chartDept      = null;
+let chartEvolution = null;
+
+const COLORS = {
+    blue:   '#3b82f6', green:  '#22c55e', red:   '#ef4444',
+    yellow: '#f59e0b', purple: '#8b5cf6', cyan:  '#06b6d4',
+    orange: '#f97316', gray:   '#6b7280'
+};
+
+// ── Seteaza perioada ──────────────────────────────────────────
+function setPeriod(days, btn) {
+    currentPeriod = days;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadAll();
+}
+
+// ── Incarca toate datele ──────────────────────────────────────
+async function loadAll() {
+    loadKPIs();
+    loadActivity();
+    loadDeptDistribution();
+    loadUptimeRanking();
+    loadAlertsAnalysis();
+    loadEvolution();
+}
+
+// ── KPI Cards ─────────────────────────────────────────────────
+async function loadKPIs() {
+    try {
+        const resp  = await fetch(`/api/analytics/kpi?days=${currentPeriod}`);
+        const data  = await resp.json();
+        document.getElementById('kpi-uptime').textContent  = (data.avg_uptime  || 0) + '%';
+        document.getElementById('kpi-devices').textContent = data.total_devices || 0;
+        document.getElementById('kpi-alerts').textContent  = data.total_alerts  || 0;
+        document.getElementById('kpi-scans').textContent   = data.total_scans   || 0;
+    } catch(e) { console.error('KPI error:', e); }
+}
+
+// ── Grafic activitate zilnica ─────────────────────────────────
+async function loadActivity() {
+    try {
+        const resp = await fetch(`/api/analytics/activity?days=${currentPeriod}`);
+        const data = await resp.json();
+        const rows = data.activity || [];
+
+        const labels  = rows.map(r => r.zi).reverse();
+        const scanari = rows.map(r => r.scanari).reverse();
+        const alerte  = rows.map(r => r.alerte).reverse();
+
+        if (chartActivity) chartActivity.destroy();
+        chartActivity = new Chart(document.getElementById('chartActivity'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label:           'Scanări',
+                        data:            scanari,
+                        backgroundColor: COLORS.blue,
+                        borderRadius:    4,
+                        borderWidth:     0
+                    },
+                    {
+                        label:           'Alerte',
+                        data:            alerte,
+                        backgroundColor: COLORS.red,
+                        borderRadius:    4,
+                        borderWidth:     0
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#64748b' }, grid: { display: false } },
+                    y: { ticks: { color: '#64748b', stepSize: 1 }, grid: { color: '#1e293b' }, beginAtZero: true }
+                }
+            }
+        });
+    } catch(e) { console.error('Activity error:', e); }
+}
+
+// ── Grafic departamente ───────────────────────────────────────
+async function loadDeptDistribution() {
+    try {
+        const resp  = await fetch('/api/analytics/departments');
+        const data  = await resp.json();
+        const rows  = data.departments || [];
+        const colors = [COLORS.blue, COLORS.green, COLORS.yellow, COLORS.purple, COLORS.cyan, COLORS.orange];
+
+        if (chartDept) chartDept.destroy();
+        chartDept = new Chart(document.getElementById('chartDept'), {
+            type: 'doughnut',
+            data: {
+                labels:   rows.map(r => r.departament + ' (' + r.procent + '%)'),
+                datasets: [{
+                    data:            rows.map(r => r.total_devices),
+                    backgroundColor: colors.slice(0, rows.length),
+                    borderWidth:     2,
+                    borderColor:     '#1e293b'
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels:   { color: '#94a3b8', font: { size: 11 } }
+                    }
+                }
+            }
+        });
+    } catch(e) { console.error('Dept error:', e); }
+}
+
+// ── Tabel uptime ranking ──────────────────────────────────────
+async function loadUptimeRanking() {
+    try {
+        const resp  = await fetch('/api/analytics/uptime-ranking');
+        const data  = await resp.json();
+        const rows  = data.ranking || [];
+        const tbody = document.getElementById('uptime-tbody');
+
+        if (rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Nu există date suficiente.</td></tr>';
+            return;
+        }
+
+        const rankIcons  = { 1: '🥇', 2: '🥈', 3: '🥉' };
+        const quartColors = { 1: 'text-success', 2: 'text-info', 3: 'text-warning', 4: 'text-danger' };
+
+        tbody.innerHTML = rows.map(r => {
+            const uptime = r.uptime_pct || 0;
+            const color  = uptime >= 90 ? 'text-success' : uptime >= 70 ? 'text-warning' : 'text-danger';
+            return `
+                <tr>
+                    <td>
+                        ${rankIcons[r.rank_uptime] || '#' + r.rank_uptime}
+                    </td>
+                    <td><code class="ip-code">${r.ip_address}</code></td>
+                    <td><span class="badge-type badge-${(r.device_type||'unknown').toLowerCase()}">${r.device_type || '?'}</span></td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:0.5rem">
+                            <div style="flex:1; background:#1e293b; border-radius:4px; height:6px">
+                                <div style="width:${uptime}%; background:${uptime>=90?'#22c55e':uptime>=70?'#f59e0b':'#ef4444'}; height:6px; border-radius:4px"></div>
+                            </div>
+                            <span class="${color}" style="font-family:var(--font-mono); font-size:0.8rem">${uptime}%</span>
+                        </div>
+                    </td>
+                    <td><small class="text-muted">${r.total_checks}</small></td>
+                    <td><small class="text-muted">${r.avg_ms ? r.avg_ms + 'ms' : '—'}</small></td>
+                    <td><span class="${quartColors[r.quartile] || ''}" style="font-size:0.8rem">Q${r.quartile}</span></td>
+                </tr>
+            `;
+        }).join('');
+    } catch(e) { console.error('Uptime error:', e); }
+}
+
+// ── Analiza alerte ────────────────────────────────────────────
+async function loadAlertsAnalysis() {
+    try {
+        const resp = await fetch('/api/analytics/alerts-analysis');
+        const data = await resp.json();
+        const rows = data.analysis || [];
+        const container = document.getElementById('alerts-analysis');
+
+        if (rows.length === 0) {
+            container.innerHTML = '<div class="empty-state py-3"><i class="bi bi-check-circle text-success"></i><p>Nicio alertă înregistrată.</p></div>';
+            return;
+        }
+
+        const typeLabels = { 'offline': 'Offline', 'back_online': 'Revenit Online', 'new_device': 'Device Nou' };
+
+        container.innerHTML = rows.map(r => `
+            <div style="padding: 0.75rem 0; border-bottom: 1px solid var(--border);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem">
+                    <strong style="font-size:0.875rem">${typeLabels[r.tip_alerta] || r.tip_alerta}</strong>
+                    <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--accent-blue)">${r.total}</span>
+                </div>
+                <div style="display:flex; gap:0.75rem; font-size:0.75rem; color:var(--text-muted)">
+                    ${r.critice > 0 ? `<span class="text-danger"><i class="bi bi-x-circle"></i> ${r.critice} critice</span>` : ''}
+                    ${r.avertismente > 0 ? `<span class="text-warning"><i class="bi bi-exclamation-triangle"></i> ${r.avertismente} warn</span>` : ''}
+                    ${r.necitite > 0 ? `<span class="text-info"><i class="bi bi-envelope"></i> ${r.necitite} necitite</span>` : ''}
+                </div>
+            </div>
+        `).join('');
+    } catch(e) { console.error('Alerts analysis error:', e); }
+}
+
+// ── Grafic evolutie device-uri ────────────────────────────────
+async function loadEvolution() {
+    try {
+        const resp = await fetch('/api/analytics/evolution');
+        const data = await resp.json();
+        const rows = (data.evolution || []).reverse();
+
+        if (chartEvolution) chartEvolution.destroy();
+        chartEvolution = new Chart(document.getElementById('chartEvolution'), {
+            type: 'line',
+            data: {
+                labels: rows.map(r => r.data_descoperire),
+                datasets: [
+                    {
+                        label:           'Total Cumulativ',
+                        data:            rows.map(r => r.total_cumulativ),
+                        borderColor:     COLORS.blue,
+                        backgroundColor: 'rgba(59,130,246,0.1)',
+                        fill:            true,
+                        tension:         0.4,
+                        pointRadius:     5,
+                        pointBackgroundColor: COLORS.blue
+                    },
+                    {
+                        label:           'Device-uri Noi',
+                        data:            rows.map(r => r.device_noi),
+                        borderColor:     COLORS.green,
+                        backgroundColor: 'transparent',
+                        tension:         0.4,
+                        pointRadius:     4,
+                        pointBackgroundColor: COLORS.green,
+                        borderDash:      [5, 5]
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#64748b' }, grid: { display: false } },
+                    y: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' }, beginAtZero: true }
+                }
+            }
+        });
+    } catch(e) { console.error('Evolution error:', e); }
+}
+
+// Pornire
+loadAll();
+</script>
+{% endblock %}

@@ -542,3 +542,259 @@ async def api_health():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
+
+
+# ============================================================
+# ANALYTICS ROUTES — adauga in main.py
+# ============================================================
+
+@app.get("/analytics")
+async def page_analytics(request: Request):
+    user = auth_manager.get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+    return templates.TemplateResponse(
+        request=request, name="analytics.html", context={"user": user}
+    )
+
+
+@app.get("/api/analytics/kpi")
+async def api_analytics_kpi(days: int = 30):
+    """KPI-uri principale pentru perioada selectata."""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT
+                ROUND(AVG(CAST(pct AS FLOAT)), 1) AS avg_uptime
+            FROM (
+                SELECT
+                    device_id,
+                    ROUND(
+                        SUM(CASE WHEN is_online = 1 THEN 1.0 ELSE 0 END)
+                        / NULLIF(COUNT(*), 0) * 100, 1
+                    ) AS pct
+                FROM uptime_log
+                WHERE checked_at >= DATEADD(day, -?, GETDATE())
+                GROUP BY device_id
+            ) sub
+        """, (days,))
+        row = cursor.fetchone()
+        avg_uptime = round(row[0], 1) if row and row[0] else 0
+
+        cursor.execute("SELECT COUNT(*) FROM devices")
+        total_devices = cursor.fetchone()[0]
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM alerts WHERE created_at >= DATEADD(day, -?, GETDATE())",
+            (days,)
+        )
+        total_alerts = cursor.fetchone()[0]
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM scan_history WHERE started_at >= DATEADD(day, -?, GETDATE())",
+            (days,)
+        )
+        total_scans = cursor.fetchone()[0]
+
+        conn.close()
+        return JSONResponse(content={
+            "avg_uptime": avg_uptime,
+            "total_devices": total_devices,
+            "total_alerts": total_alerts,
+            "total_scans": total_scans
+        })
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@app.get("/api/analytics/activity")
+async def api_analytics_activity(days: int = 30):
+    """Activitate zilnica: scanari + alerte."""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            WITH activity AS (
+                SELECT CAST(started_at AS DATE) AS zi, 'scanare' AS tip, COUNT(*) AS numar
+                FROM scan_history
+                WHERE started_at >= DATEADD(day, -?, GETDATE())
+                GROUP BY CAST(started_at AS DATE)
+                UNION ALL
+                SELECT CAST(created_at AS DATE) AS zi, 'alerta' AS tip, COUNT(*) AS numar
+                FROM alerts
+                WHERE created_at >= DATEADD(day, -?, GETDATE())
+                GROUP BY CAST(created_at AS DATE)
+            )
+            SELECT
+                zi,
+                SUM(CASE WHEN tip = 'scanare' THEN numar ELSE 0 END) AS scanari,
+                SUM(CASE WHEN tip = 'alerta'  THEN numar ELSE 0 END) AS alerte
+            FROM activity
+            GROUP BY zi
+            ORDER BY zi DESC
+        """, (days, days))
+
+        columns = [col[0] for col in cursor.description]
+        rows = []
+        for row in cursor.fetchall():
+            item = dict(zip(columns, row))
+            if item.get("zi"):
+                item["zi"] = str(item["zi"])
+            rows.append(item)
+
+        conn.close()
+        return JSONResponse(content={"activity": rows})
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@app.get("/api/analytics/departments")
+async def api_analytics_departments():
+    """Distributia device-urilor pe departament cu procente."""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT
+                ISNULL(department, 'Neatribuit') AS departament,
+                COUNT(*) AS total_devices,
+                SUM(CASE WHEN status = 'online'  THEN 1 ELSE 0 END) AS online,
+                SUM(CASE WHEN status = 'offline' THEN 1 ELSE 0 END) AS offline,
+                ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 1)   AS procent
+            FROM devices
+            GROUP BY department
+            ORDER BY total_devices DESC
+        """)
+
+        columns = [col[0] for col in cursor.description]
+        rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        conn.close()
+        return JSONResponse(content={"departments": rows})
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@app.get("/api/analytics/uptime-ranking")
+async def api_analytics_uptime_ranking():
+    """Top device-uri dupa uptime cu RANK() si NTILE()."""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            WITH uptime_stats AS (
+                SELECT
+                    d.id, d.ip_address, d.hostname, d.device_type, d.department,
+                    COUNT(ul.id) AS total_checks,
+                    ROUND(
+                        SUM(CASE WHEN ul.is_online = 1 THEN 1.0 ELSE 0 END)
+                        / NULLIF(COUNT(ul.id), 0) * 100, 1
+                    ) AS uptime_pct,
+                    AVG(CASE WHEN ul.response_ms IS NOT NULL
+                        THEN CAST(ul.response_ms AS FLOAT) END) AS avg_response_ms
+                FROM devices d
+                LEFT JOIN uptime_log ul ON d.id = ul.device_id
+                GROUP BY d.id, d.ip_address, d.hostname, d.device_type, d.department
+            )
+            SELECT
+                ip_address,
+                ISNULL(hostname, 'Unknown') AS hostname,
+                device_type,
+                ISNULL(department, 'Neatribuit') AS department,
+                total_checks,
+                ISNULL(uptime_pct, 0) AS uptime_pct,
+                ROUND(avg_response_ms, 0) AS avg_ms,
+                RANK()  OVER (ORDER BY uptime_pct DESC) AS rank_uptime,
+                NTILE(4) OVER (ORDER BY uptime_pct DESC) AS quartile
+            FROM uptime_stats
+            WHERE total_checks > 0
+            ORDER BY rank_uptime
+        """)
+
+        columns = [col[0] for col in cursor.description]
+        rows = []
+        for row in cursor.fetchall():
+            item = dict(zip(columns, row))
+            for k, v in item.items():
+                if hasattr(v, 'strftime'):
+                    item[k] = str(v)
+            rows.append(item)
+
+        conn.close()
+        return JSONResponse(content={"ranking": rows})
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@app.get("/api/analytics/alerts-analysis")
+async def api_analytics_alerts_analysis():
+    """Analiza alertelor pe tip si severitate."""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT
+                alert_type AS tip_alerta,
+                COUNT(*) AS total,
+                SUM(CASE WHEN severity = 'critical' THEN 1 ELSE 0 END) AS critice,
+                SUM(CASE WHEN severity = 'warning'  THEN 1 ELSE 0 END) AS avertismente,
+                SUM(CASE WHEN severity = 'info'     THEN 1 ELSE 0 END) AS informatii,
+                SUM(CASE WHEN is_read = 0           THEN 1 ELSE 0 END) AS necitite
+            FROM alerts
+            GROUP BY alert_type
+            ORDER BY total DESC
+        """)
+
+        columns = [col[0] for col in cursor.description]
+        rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        conn.close()
+        return JSONResponse(content={"analysis": rows})
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+@app.get("/api/analytics/evolution")
+async def api_analytics_evolution():
+    """Evolutia cumulativa a device-urilor descoperite."""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            WITH device_timeline AS (
+                SELECT
+                    CAST(first_seen AS DATE) AS data_descoperire,
+                    COUNT(*) AS device_noi,
+                    SUM(COUNT(*)) OVER (
+                        ORDER BY CAST(first_seen AS DATE)
+                        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+                    ) AS total_cumulativ
+                FROM devices
+                WHERE first_seen IS NOT NULL
+                GROUP BY CAST(first_seen AS DATE)
+            )
+            SELECT
+                data_descoperire,
+                device_noi,
+                total_cumulativ
+            FROM device_timeline
+            ORDER BY data_descoperire DESC
+        """)
+
+        columns = [col[0] for col in cursor.description]
+        rows = []
+        for row in cursor.fetchall():
+            item = dict(zip(columns, row))
+            if item.get("data_descoperire"):
+                item["data_descoperire"] = str(item["data_descoperire"])
+            rows.append(item)
+
+        conn.close()
+        return JSONResponse(content={"evolution": rows})
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
